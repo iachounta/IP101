@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Instruction Execution Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f3f4f6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+
+        code {
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-play {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-next {
+            background: #4b5563;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #dc2626;
+            color: white;
+        }
+
+        .progress-section {
+            margin-bottom: 30px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #2563eb;
+            transition: width 0.3s ease;
+        }
+
+        .phase-indicator {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .phase-badge {
+            display: inline-block;
+            padding: 12px 32px;
+            border-radius: 50px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .phase-fetch { background: #2563eb; }
+        .phase-decode { background: #7c3aed; }
+        .phase-execute { background: #16a34a; }
+
+        .phase-description {
+            color: #374151;
+            font-size: 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            border-radius: 12px;
+            padding: 24px;
+            border: 2px solid;
+        }
+
+        .panel-memory {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #fcd34d;
+        }
+
+        .panel-cpu {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-color: #93c5fd;
+        }
+
+        .panel-registers {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-color: #86efac;
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .memory-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .memory-item.active {
+            background: #fcd34d;
+            box-shadow: 0 0 0 2px #f59e0b;
+            transform: scale(1.02);
+        }
+
+        .memory-address {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .memory-instruction {
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+        }
+
+        .cpu-section {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .cpu-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .cpu-content {
+            font-size: 14px;
+            color: #16a34a;
+            font-weight: 500;
+        }
+
+        .cpu-content.inactive {
+            color: #9ca3af;
+        }
+
+        .cpu-instruction {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .register {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .register-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .register-value {
+            font-family: 'Courier New', monospace;
+            font-size: 28px;
+            font-weight: bold;
+            color: #16a34a;
+        }
+
+        .register-value.empty {
+            color: #d1d5db;
+        }
+
+        .register-value.active {
+            color: #16a34a;
+        }
+
+        .variable-storage {
+            background: #dcfce7;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 16px;
+            border: 2px solid #16a34a;
+        }
+
+        .legend {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .legend-fetch { background: #2563eb; }
+        .legend-decode { background: #7c3aed; }
+        .legend-execute { background: #16a34a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CPU Instruction Execution</h1>
+        <p class="subtitle">Watch how <code>x = 5 + 3</code> gets executed</p>
+
+        <div class="controls">
+            <button class="btn-play" onclick="togglePlay()">
+                <span id="playIcon">▶</span>
+                <span id="playText">Play</span>
+            </button>
+            <button class="btn-next" onclick="nextStep()" id="nextBtn">
+                <span>▶▶</span>
+                <span>Next Step</span>
+            </button>
+            <button class="btn-reset" onclick="reset()">
+                <span>↻</span>
+                <span>Reset</span>
+            </button>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-info">
+                <span>Step <span id="currentStep">1</span> of <span id="totalSteps">12</span></span>
+                <span><span id="percentage">8</span>% Complete</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="phase-indicator">
+            <div class="phase-badge" id="phaseBadge">Fetch Phase</div>
+            <p class="phase-description" id="phaseDescription">CPU retrieves instruction from memory</p>
+        </div>
+
+        <div class="grid">
+            <div class="panel panel-memory">
+                <div class="panel-title">💾 Memory</div>
+                <div id="memoryContent"></div>
+            </div>
+
+            <div class="panel panel-cpu">
+                <div class="panel-title">🔧 CPU</div>
+                <div class="cpu-section">
+                    <div class="cpu-section-title">Control Unit</div>
+                    <div class="cpu-content inactive" id="controlUnit">Waiting...</div>
+                </div>
+                <div class="cpu-section">
+                    <div class="cpu-section-title">Current Instruction</div>
+                    <div class="cpu-instruction" id="currentInstruction">LOAD 5</div>
+                </div>
+                <div class="cpu-section">
+                    <div class="cpu-section-title">ALU (Arithmetic Logic Unit)</div>
+                    <div class="cpu-content inactive" id="alu">Idle</div>
+                </div>
+            </div>
+
+            <div class="panel panel-registers">
+                <div class="panel-title">📊 Registers</div>
+                <div class="register">
+                    <div class="register-label">Register A</div>
+                    <div class="register-value empty" id="regA">?</div>
+                </div>
+                <div class="register">
+                    <div class="register-label">Register B</div>
+                    <div class="register-value empty" id="regB">?</div>
+                </div>
+                <div class="register">
+                    <div class="register-label">Result Register</div>
+                    <div class="register-value empty" id="regResult">?</div>
+                </div>
+                <div id="variableStorage"></div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-title">The Fetch-Decode-Execute Cycle:</div>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color legend-fetch"></div>
+                    <div><strong>Fetch:</strong> Retrieve instruction from memory</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-decode"></div>
+                    <div><strong>Decode:</strong> Figure out what instruction means</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-execute"></div>
+                    <div><strong>Execute:</strong> Perform the operation</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const instructions = [
+            { phase: 'Fetch', description: 'CPU retrieves instruction from memory', memoryAddress: '0x1000', instruction: 'LOAD 5', registers: { A: '?', B: '?', Result: '?' } },
+            { phase: 'Decode', description: 'Control unit decodes the instruction', memoryAddress: '0x1000', instruction: 'LOAD 5', registers: { A: '?', B: '?', Result: '?' }, decoded: 'Load value 5 into Register A' },
+            { phase: 'Execute', description: 'ALU loads value 5 into Register A', memoryAddress: '0x1000', instruction: 'LOAD 5', registers: { A: '5', B: '?', Result: '?' } },
+            { phase: 'Fetch', description: 'CPU retrieves next instruction', memoryAddress: '0x1004', instruction: 'LOAD 3', registers: { A: '5', B: '?', Result: '?' } },
+            { phase: 'Decode', description: 'Control unit decodes the instruction', memoryAddress: '0x1004', instruction: 'LOAD 3', registers: { A: '5', B: '?', Result: '?' }, decoded: 'Load value 3 into Register B' },
+            { phase: 'Execute', description: 'ALU loads value 3 into Register B', memoryAddress: '0x1004', instruction: 'LOAD 3', registers: { A: '5', B: '3', Result: '?' } },
+            { phase: 'Fetch', description: 'CPU retrieves next instruction', memoryAddress: '0x1008', instruction: 'ADD A, B', registers: { A: '5', B: '3', Result: '?' } },
+            { phase: 'Decode', description: 'Control unit decodes the instruction', memoryAddress: '0x1008', instruction: 'ADD A, B', registers: { A: '5', B: '3', Result: '?' }, decoded: 'Add Register A and Register B' },
+            { phase: 'Execute', description: 'ALU performs addition: 5 + 3 = 8', memoryAddress: '0x1008', instruction: 'ADD A, B', registers: { A: '5', B: '3', Result: '8' } },
+            { phase: 'Fetch', description: 'CPU retrieves next instruction', memoryAddress: '0x100C', instruction: 'STORE x', registers: { A: '5', B: '3', Result: '8' } },
+            { phase: 'Decode', description: 'Control unit decodes the instruction', memoryAddress: '0x100C', instruction: 'STORE x', registers: { A: '5', B: '3', Result: '8' }, decoded: 'Store Result into memory location x' },
+            { phase: 'Execute', description: 'Result (8) stored in memory as variable x', memoryAddress: '0x100C', instruction: 'STORE x', registers: { A: '5', B: '3', Result: '8' }, stored: true }
+        ];
+
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval = null;
+
+        const memoryAddresses = [
+            { addr: '0x1000', inst: 'LOAD 5' },
+            { addr: '0x1004', inst: 'LOAD 3' },
+            { addr: '0x1008', inst: 'ADD A, B' },
+            { addr: '0x100C', inst: 'STORE x' }
+        ];
+
+        function render() {
+            const inst = instructions[currentStep];
+            
+            // Update progress
+            document.getElementById('currentStep').textContent = currentStep + 1;
+            document.getElementById('totalSteps').textContent = instructions.length;
+            const progress = ((currentStep + 1) / instructions.length) * 100;
+            document.getElementById('percentage').textContent = Math.round(progress);
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            // Update phase
+            const badge = document.getElementById('phaseBadge');
+            badge.textContent = inst.phase + ' Phase';
+            badge.className = 'phase-badge phase-' + inst.phase.toLowerCase();
+            document.getElementById('phaseDescription').textContent = inst.description;
+
+            // Update memory
+            let memoryHTML = '';
+            memoryAddresses.forEach(mem => {
+                const isActive = mem.addr === inst.memoryAddress;
+                memoryHTML += `
+                    <div class="memory-item ${isActive ? 'active' : ''}">
+                        <div class="memory-address">Address: ${mem.addr}</div>
+                        <div class="memory-instruction">${mem.inst}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('memoryContent').innerHTML = memoryHTML;
+
+            // Update CPU
+            const controlUnit = document.getElementById('controlUnit');
+            if (inst.decoded) {
+                controlUnit.textContent = inst.decoded;
+                controlUnit.className = 'cpu-content';
+            } else {
+                controlUnit.textContent = 'Waiting...';
+                controlUnit.className = 'cpu-content inactive';
+            }
+
+            document.getElementById('currentInstruction').textContent = inst.instruction;
+
+            const alu = document.getElementById('alu');
+            if (inst.phase === 'Execute' && inst.instruction.startsWith('ADD')) {
+                alu.textContent = 'Computing: 5 + 3 = 8';
+                alu.className = 'cpu-content';
+            } else {
+                alu.textContent = 'Idle';
+                alu.className = 'cpu-content inactive';
+            }
+
+            // Update registers
+            const regA = document.getElementById('regA');
+            regA.textContent = inst.registers.A;
+            regA.className = inst.registers.A !== '?' ? 'register-value active' : 'register-value empty';
+
+            const regB = document.getElementById('regB');
+            regB.textContent = inst.registers.B;
+            regB.className = inst.registers.B !== '?' ? 'register-value active' : 'register-value empty';
+
+            const regResult = document.getElementById('regResult');
+            regResult.textContent = inst.registers.Result;
+            regResult.className = inst.registers.Result === '8' ? 'register-value active' : 'register-value empty';
+
+            // Update variable storage
+            const varStorage = document.getElementById('variableStorage');
+            if (inst.stored) {
+                varStorage.innerHTML = `
+                    <div class="variable-storage">
+                        <div class="memory-address">Variable: x</div>
+                        <div class="memory-instruction" style="color: #166534; font-weight: bold;">Value: 8</div>
+                    </div>
+                `;
+            } else {
+                varStorage.innerHTML = '';
+            }
+
+            // Update next button state
+            document.getElementById('nextBtn').disabled = currentStep >= instructions.length - 1;
+        }
+
+        function nextStep() {
+            if (currentStep < instructions.length - 1) {
+                currentStep++;
+                render();
+                if (isPlaying && currentStep >= instructions.length - 1) {
+                    stopPlay();
+                }
+            }
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                stopPlay();
+            } else {
+                startPlay();
+            }
+        }
+
+        function startPlay() {
+            if (currentStep >= instructions.length - 1) {
+                currentStep = 0;
+                render();
+            }
+            isPlaying = true;
+            document.getElementById('playIcon').textContent = '⏸';
+            document.getElementById('playText').textContent = 'Pause';
+            
+            playInterval = setInterval(() => {
+                if (currentStep < instructions.length - 1) {
+                    nextStep();
+                } else {
+                    stopPlay();
+                }
+            }, 1500);
+        }
+
+        function stopPlay() {
+            isPlaying = false;
+            document.getElementById('playIcon').textContent = '▶';
+            document.getElementById('playText').textContent = 'Play';
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+            }
+        }
+
+        function reset() {
+            stopPlay();
+            currentStep = 0;
+            render();
+        }
+
+        // Initialize
+        render();
+    </script>
+</body>
+</html>
