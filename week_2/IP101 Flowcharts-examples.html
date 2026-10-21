@@ -1,0 +1,528 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>IP101 Flowcharts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: example menu on the left, flowchart canvas in the middle, trace panel (inputs, variables, Python, output) on the right; menu becomes a dropdown and columns stack on narrow screens. */
+:root {
+  --bg: #f5f7fa;
+  --panel: #ffffff;
+  --ink: #0b2a4a;
+  --muted: #5a6b80;
+  --line: #c6d1de;
+  --shape: #ffffff;
+  --accent: #e08a00;
+  --accent-soft: #fff1d6;
+  --done: #2e7d5b;
+  --done-soft: #e3f3ec;
+  --console: #0e2238;
+  --console-fg: #d9f2e4;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1724; --panel: #142233; --ink: #e3ecf6; --muted: #93a5bb; --line: #33475e;
+  --shape: #182a3e; --accent: #ffb23f; --accent-soft: #3d2c10; --done: #5cc79a; --done-soft: #143326;
+  --console: #08121e; --console-fg: #c9f0db; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d1724; --panel: #142233; --ink: #e3ecf6; --muted: #93a5bb; --line: #33475e;
+  --shape: #182a3e; --accent: #ffb23f; --accent-soft: #3d2c10; --done: #5cc79a; --done-soft: #143326;
+  --console: #08121e; --console-fg: #c9f0db; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px; box-sizing: border-box; }
+.wrap { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+
+/* Course header and disclaimer */
+.course { max-width: 1400px; margin: 0 auto 18px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
+.course p { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: .01em; text-wrap: balance; }
+.disclaimer { max-width: 1400px; margin: 28px auto 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.disclaimer p { margin: 0; font-size: .85rem; color: var(--muted); }
+
+/* Menu */
+nav.menu { position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); display: grid; gap: 4px; }
+nav.menu .brand { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: 0 10px 8px; }
+nav.menu a { display: grid; grid-template-columns: 2ch 1fr; gap: 8px; align-items: baseline; text-decoration: none; color: var(--ink);
+  padding: 9px 10px; border-radius: 8px; border: 1px solid transparent; line-height: 1.3; }
+nav.menu a .n { font: 600 .85rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+nav.menu a:hover { background: var(--panel); border-color: var(--line); }
+nav.menu a[aria-current="true"] { background: var(--panel); border-color: var(--ink); font-weight: 700; }
+nav.menu a[aria-current="true"] .n { color: var(--accent); }
+nav.menu a:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.picker { display: none; }
+
+.main { grid-column: 2 / 4; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; min-width: 0; }
+header { grid-column: 1 / -1; display: grid; gap: 6px; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+h1 { margin: 0; font-size: 1.6rem; text-wrap: balance; }
+.task { margin: 0; color: var(--muted); max-width: 70ch; }
+.hint { color: var(--muted); font-size: .85rem; }
+kbd { font-family: var(--font-mono); font-size: .8rem; border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; background: var(--panel); }
+
+.chart { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
+.chart svg { display: block; width: 100%; max-height: calc(100vh - 230px); height: auto; }
+.node .sh { fill: var(--shape); stroke: var(--ink); stroke-width: 2; transition: fill .25s, stroke .25s; }
+.node text { fill: var(--ink); font-family: var(--font-mono); font-size: 18px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+.node .tag { font-family: var(--font-body); font-size: 11px; font-weight: 400; fill: var(--muted); letter-spacing: .06em; }
+.node.done .sh { fill: var(--done-soft); stroke: var(--done); }
+.node.active .sh { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 3.5; }
+.edge { stroke: var(--line); stroke-width: 2.5; fill: none; transition: stroke .25s; }
+.edge.done { stroke: var(--done); }
+.elabel { font: 700 14px var(--font-body); fill: var(--muted); letter-spacing: .04em; }
+.elabel.done { fill: var(--done); }
+.arrowhead { fill: var(--line); }
+.edge-done-head { fill: var(--done); }
+
+.side { display: grid; gap: 14px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card h2 { margin: 0 0 10px; font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.inputs { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.inputs label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.inputs input { font: 600 1.2rem var(--font-mono); width: 6.5rem; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+button, select { font: 700 .95rem var(--font-body); padding: 9px 14px; border-radius: 7px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.status { margin-top: 12px; font-size: 1.05rem; min-height: 3em; }
+.status b { color: var(--accent); }
+
+table.vars { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.vars th, .vars td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.vars th { font: 400 .75rem var(--font-body); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.vars td.val { font-size: 1.15rem; font-weight: 600; overflow-wrap: anywhere; }
+.vars tr.flash td.val { color: var(--accent); }
+.vars .empty { color: var(--muted); font-weight: 400; }
+
+pre.code { margin: 0; font: .95rem/1.7 var(--font-mono); overflow-x: auto; }
+pre.code > span { display: block; padding: 0 8px; border-radius: 4px; border-left: 3px solid transparent; white-space: pre; }
+pre.code > span.cur { background: var(--accent-soft); border-left-color: var(--accent); }
+pre.code .ln { color: var(--muted); margin-right: 10px; }
+
+.console { background: var(--console); color: var(--console-fg); font: .95rem/1.6 var(--font-mono); border-radius: 8px; padding: 10px 12px; min-height: 5.2em; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (max-width: 1050px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); }
+  nav.menu { display: none; }
+  .main { grid-column: 1; }
+  .picker { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .picker select { max-width: 100%; }
+}
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } .chart svg { max-height: none; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="course"><p>Introduction to Programming (IP101)</p></div>
+
+<div class="wrap">
+  <nav class="menu" id="menu" aria-label="Flowchart examples">
+    <div class="brand">Flowchart examples</div>
+  </nav>
+
+  <div class="main">
+    <header>
+      <div class="picker">
+        <label for="pick" class="eyebrow">Example</label>
+        <select id="pick"></select>
+      </div>
+      <div class="eyebrow" id="eyebrow"></div>
+      <h1 id="title"></h1>
+      <p class="task" id="task"></p>
+      <span class="hint"><kbd>→</kbd> / <kbd>Space</kbd> next step · <kbd>←</kbd> back · <kbd>R</kbd> reset · <kbd>[</kbd> <kbd>]</kbd> previous / next example</span>
+    </header>
+
+    <section class="chart" aria-label="Flowchart">
+      <svg id="svg" role="img">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          <marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="edge-done-head"/></marker>
+        </defs>
+        <g id="edges"></g>
+        <g id="nodes"></g>
+      </svg>
+    </section>
+
+    <div class="side">
+      <section class="card">
+        <h2>Test values</h2>
+        <div class="inputs" id="inputs"></div>
+        <div class="controls">
+          <button id="back" type="button">◀ Back</button>
+          <button id="next" class="primary" type="button">Start ▶</button>
+          <button id="play" type="button">Auto-play</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+        <div class="status" id="status" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>Variables in memory</h2>
+        <table class="vars">
+          <thead><tr><th>Name</th><th>Value</th></tr></thead>
+          <tbody id="vars"></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Same algorithm in Python</h2>
+        <pre class="code" id="code"></pre>
+      </section>
+
+      <section class="card">
+        <h2>Output</h2>
+        <div class="console" id="console"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="disclaimer"><p>This interactive webpage was partially created using Claude.AI</p></footer>
+
+<script>
+/* =====================================================================
+   FLOWCHART LIBRARY — add new examples to this list.
+   Each example:
+     id       short token, used as the link anchor (…#square)
+     title    menu + heading text
+     task     the exercise statement
+     vars     variables in memory order: { name, kind: "int" | "float" }
+     inputs   default test values the user can change: { name: value }
+     python   lines of the equivalent Python program
+     steps    one per flowchart shape:
+       { type: "start" | "end" }
+       { type: "input",    label, read: ["A", "B"], line }
+       { type: "process",  label, set: "Area", calc: v => v.L * v.L, explain: v => "…", line }
+       { type: "decision", label, test: v => v.A > v.B, explain: v => "…", yes: "<id>", no: "<id>", line }
+       { type: "output",   label, print: ["Area", "Perimeter"], line }
+     Optional on any step:
+       id    name used by yes / no / next   (default: its position in the list)
+       next  id of the following shape     (default: the next step in the list)
+       row   vertical position             (default: one below the previous step)
+       col   0 = main column, 1 = branch column on the right (default 0)
+     line = index (0-based) of the matching Python line, or a list of indexes.
+   ===================================================================== */
+const ALGORITHMS = [
+  {
+    id: "sum",
+    title: "Sum of two numbers",
+    task: "Read two numbers A and B, calculate their sum and print it.",
+    vars: [{ name: "A", kind: "int" }, { name: "B", kind: "int" }, { name: "SUM", kind: "int" }],
+    inputs: { A: 7, B: 5 },
+    python: [
+      'A = int(input("Enter A: "))',
+      'B = int(input("Enter B: "))',
+      "SUM = A + B",
+      "print(SUM)"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "Input A", read: ["A"], line: 0 },
+      { type: "input", label: "Input B", read: ["B"], line: 1 },
+      { type: "process", label: "SUM = A + B", set: "SUM", calc: v => v.A + v.B,
+        explain: v => `${fmt(v.A)} + ${fmt(v.B)} = ${fmt(v.A + v.B)}`, line: 2 },
+      { type: "output", label: "Print SUM", print: ["SUM"], line: 3 },
+      { type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "square",
+    title: "Area and perimeter of a square",
+    task: "For a square with side L, calculate its area and perimeter.",
+    vars: [{ name: "L", kind: "float" }, { name: "Area", kind: "float" }, { name: "Perimeter", kind: "float" }],
+    inputs: { L: 4 },
+    python: [
+      'L = float(input("Enter L: "))',
+      "Area = L * L",
+      "Perimeter = 4 * L",
+      "print(Area, Perimeter)"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT L", read: ["L"], line: 0 },
+      { type: "process", label: "Area = L x L", set: "Area", calc: v => v.L * v.L,
+        explain: v => `${fmt(v.L)} × ${fmt(v.L)} = ${fmt(v.L * v.L, "float")}`, line: 1 },
+      { type: "process", label: "Perimeter = 4 x L", set: "Perimeter", calc: v => 4 * v.L,
+        explain: v => `4 × ${fmt(v.L)} = ${fmt(4 * v.L, "float")}`, line: 2 },
+      { type: "output", label: "PRINT Area, Perimeter", print: ["Area", "Perimeter"], line: 3 },
+      { type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "max",
+    title: "Larger of two numbers",
+    task: "What is the larger of two numbers A and B?",
+    vars: [{ name: "A", kind: "int" }, { name: "B", kind: "int" }, { name: "MAX", kind: "int" }],
+    inputs: { A: 7, B: 5 },
+    python: [
+      'A = int(input("Enter A: "))',
+      'B = int(input("Enter B: "))',
+      "if A > B:",
+      "    MAX = A",
+      "else:",
+      "    MAX = B",
+      "print(MAX)"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT A,B", read: ["A", "B"], line: [0, 1] },
+      { id: "cmp", type: "decision", label: "A > B ?", test: v => v.A > v.B,
+        explain: v => `${fmt(v.A)} > ${fmt(v.B)}`, yes: "maxA", no: "maxB", line: 2 },
+      { id: "maxA", type: "process", label: "MAX = A", set: "MAX", calc: v => v.A,
+        explain: v => `MAX = A = ${fmt(v.A)}`, line: 3, row: 2, col: 1, next: "print" },
+      { id: "maxB", type: "process", label: "MAX = B", set: "MAX", calc: v => v.B,
+        explain: v => `MAX = B = ${fmt(v.B)}`, line: [4, 5], row: 3 },
+      { id: "print", type: "output", label: "PRINT MAX", print: ["MAX"], line: 6 },
+      { type: "end", label: "END" }
+    ]
+  }
+];
+/* ===================================================================== */
+
+const NS = "http://www.w3.org/2000/svg";
+const H = 54, HD = 84, RGAP = 46, Y0 = 24, VBW = 480;
+const $ = id => document.getElementById(id);
+const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+// Print numbers the way Python would: floats always show a decimal part.
+function fmt(x, kind) {
+  if (kind === "float" && Number.isInteger(x)) return x.toFixed(1);
+  return String(x);
+}
+
+let algo = null, kinds = {}, step = 0, timer = null, nodeEls = [], edgeEls = {}, idIndex = {};
+
+// Menu + dropdown
+ALGORITHMS.forEach((a, i) => {
+  const link = document.createElement("a");
+  link.href = "#" + a.id; link.dataset.id = a.id;
+  link.innerHTML = `<span class="n">${i + 1}</span><span>${esc(a.title)}</span>`;
+  $("menu").append(link);
+  const o = document.createElement("option"); o.value = a.id; o.textContent = `${i + 1}. ${a.title}`; $("pick").append(o);
+});
+$("menu").addEventListener("click", e => { const a = e.target.closest("a"); if (!a) return; e.preventDefault(); load(a.dataset.id); });
+$("pick").addEventListener("change", e => load(e.target.value));
+
+function load(id) {
+  stopPlay();
+  algo = ALGORITHMS.find(a => a.id === id) || ALGORITHMS[0];
+  kinds = Object.fromEntries(algo.vars.map(v => [v.name, v.kind]));
+  idIndex = {};
+  algo.steps.forEach((s, i) => { idIndex[s.id ?? String(i)] = i; });
+  step = 0;
+  const idx = ALGORITHMS.indexOf(algo);
+  try { history.replaceState(null, "", "#" + algo.id); } catch (e) {}
+  document.querySelectorAll("nav.menu a").forEach(a => a.setAttribute("aria-current", a.dataset.id === algo.id));
+  $("pick").value = algo.id;
+  $("eyebrow").textContent = `Example ${idx + 1} of ${ALGORITHMS.length}`;
+  $("title").textContent = algo.title;
+  $("task").textContent = algo.task;
+
+  $("inputs").innerHTML = "";
+  Object.entries(algo.inputs).forEach(([name, val]) => {
+    const lab = document.createElement("label");
+    lab.htmlFor = "in-" + name;
+    lab.innerHTML = `${esc(name)} <input id="in-${esc(name)}" type="number" step="any" value="${val}">`;
+    lab.querySelector("input").addEventListener("input", () => { step = Math.min(step, path().length); render(); });
+    $("inputs").append(lab);
+  });
+
+  $("vars").innerHTML = algo.vars.map(v => `<tr data-v="${esc(v.name)}"><td>${esc(v.name)}</td><td class="val"></td></tr>`).join("");
+  $("code").innerHTML = algo.python.map((l, i) => `<span><span class="ln">${i + 1}</span>${esc(l)}</span>`).join("");
+
+  drawChart();
+  render();
+}
+
+// Where each step goes next (decisions have two exits).
+function exits(i) {
+  const s = algo.steps[i];
+  if (s.type === "end") return [];
+  if (s.type === "decision") return [{ to: idIndex[s.yes], label: "YES" }, { to: idIndex[s.no], label: "NO" }];
+  if (s.next !== undefined) return [{ to: idIndex[s.next] }];
+  return i + 1 < algo.steps.length ? [{ to: i + 1 }] : [];
+}
+
+function drawChart() {
+  const svg = $("svg"), gN = $("nodes"), gE = $("edges");
+  gN.innerHTML = ""; gE.innerHTML = ""; nodeEls = []; edgeEls = {};
+  const branched = algo.steps.some(s => (s.col || 0) > 0);
+  const colX = branched ? [180, 395] : [220];
+
+  // Geometry
+  let r = -1;
+  const geo = algo.steps.map(s => {
+    r = s.row !== undefined ? s.row : r + 1;
+    const col = s.col || 0, h = s.type === "decision" ? HD : H;
+    const w = s.type === "decision" ? Math.max(180, s.label.length * 12 + 80)
+            : (col > 0 ? 160 : Math.max(160, s.label.length * 11.5 + 56));
+    return { row: r, col, cx: colX[col], w, h };
+  });
+  const nRows = Math.max(...geo.map(g => g.row)) + 1;
+  const rowH = Array(nRows).fill(H);
+  geo.forEach(g => { rowH[g.row] = Math.max(rowH[g.row], g.h); });
+  const rowTop = []; let y = Y0;
+  rowH.forEach((h, i) => { rowTop[i] = y; y += h + RGAP; });
+  geo.forEach(g => { g.top = rowTop[g.row] + (rowH[g.row] - g.h) / 2; g.bot = g.top + g.h; g.cy = g.top + g.h / 2; });
+  svg.setAttribute("viewBox", `0 0 ${VBW} ${y - RGAP + Y0}`);
+  svg.setAttribute("aria-label", "Flowchart: " + algo.steps.map(s => s.label).join(", "));
+
+  // Shapes
+  const tagOf = { start: "terminal", end: "terminal", input: "input", output: "output", process: "process", decision: "decision" };
+  algo.steps.forEach((s, i) => {
+    const g0 = geo[i], { cx, w, h, top } = g0, x = cx - w / 2, g = el("g", { class: "node" });
+    let sh;
+    if (s.type === "start" || s.type === "end") sh = el("rect", { x, y: top, width: w, height: h, rx: h / 2 });
+    else if (s.type === "process") sh = el("rect", { x, y: top, width: w, height: h, rx: 3 });
+    else if (s.type === "decision") sh = el("polygon", { points: `${cx},${top} ${cx + w / 2},${top + h / 2} ${cx},${top + h} ${x},${top + h / 2}` });
+    else { const k = 18; sh = el("polygon", { points: `${x + k},${top} ${x + w + k},${top} ${x + w - k},${top + h} ${x - k},${top + h}` }); }
+    sh.setAttribute("class", "sh");
+    const t = el("text", { x: cx, y: g0.cy }); t.textContent = s.label;
+    g.append(sh, t);
+    if (!branched || g0.col === 0) {
+      const tag = branched
+        ? el("text", { x: cx - w / 2 - 22, y: g0.cy, class: "tag", "text-anchor": "end" })
+        : el("text", { x: cx + w / 2 + 26, y: g0.cy, class: "tag", "text-anchor": "start" });
+      tag.textContent = tagOf[s.type].toUpperCase();
+      g.append(tag);
+    }
+    gN.append(g); nodeEls.push(g);
+  });
+
+  // Arrows
+  algo.steps.forEach((s, i) => {
+    exits(i).forEach(({ to, label }) => {
+      const a = geo[i], b = geo[to];
+      let d, lx, ly, anchor = "start";
+      if (b.row === a.row && b.col > a.col) {           // sideways branch
+        const x1 = a.cx + a.w / 2, x2 = b.cx - b.w / 2 - 3;
+        d = `M${x1},${a.cy} H${x2}`; lx = (x1 + x2) / 2; ly = a.cy - 10; anchor = "middle";
+      } else if (b.cx === a.cx) {                       // straight down
+        d = `M${a.cx},${a.bot} V${b.top - 3}`; lx = a.cx + 10; ly = a.bot + 18;
+      } else {                                          // down, across, down (joins the main line)
+        const yj = b.top - 20;
+        d = `M${a.cx},${a.bot} V${yj} H${b.cx} V${b.top - 3}`; lx = a.cx + 10; ly = a.bot + 18;
+      }
+      const p = el("path", { d, class: "edge", "marker-end": "url(#ah)" });
+      gE.append(p);
+      let lt = null;
+      if (label) { lt = el("text", { x: lx, y: ly, class: "elabel", "text-anchor": anchor }); lt.textContent = label; gE.append(lt); }
+      edgeEls[`${i}>${to}`] = { p, lt };
+    });
+  });
+}
+
+function readInputs() {
+  const v = {};
+  Object.keys(algo.inputs).forEach(name => {
+    const raw = $("in-" + name).value, x = Number(raw);
+    v[name] = raw === "" || !Number.isFinite(x) ? 0 : (kinds[name] === "int" ? Math.trunc(x) : x);
+  });
+  return v;
+}
+
+// Run the whole algorithm once to find the route taken for the current inputs.
+function path() {
+  const given = readInputs(), mem = {}, p = [];
+  let i = 0;
+  while (i !== undefined && p.length < 200) {
+    const s = algo.steps[i]; p.push(i);
+    if (s.type === "input") s.read.forEach(n => { mem[n] = given[n]; });
+    if (s.type === "process") mem[s.set] = s.calc(mem);
+    if (s.type === "decision") { i = idIndex[s.test(mem) ? s.yes : s.no]; continue; }
+    const ex = exits(i); i = ex.length ? ex[0].to : undefined;
+  }
+  return p;
+}
+
+// Replay the first `step` shapes on the route: memory, output and the latest message.
+function run(route) {
+  const given = readInputs(), mem = {}, out = [];
+  let msg = "Press <b>Start</b> to run the algorithm.", changed = [];
+  route.slice(0, step).forEach(i => {
+    const s = algo.steps[i]; changed = [];
+    if (s.type === "start") msg = "<b>START</b>: the program begins.";
+    else if (s.type === "end") { msg = "<b>END</b>: the program stops."; out.push("", "[program finished]"); }
+    else if (s.type === "input") {
+      s.read.forEach(name => { mem[name] = given[name]; changed.push(name); out.push(`Enter ${name}: ${fmt(given[name])}`); });
+      msg = `<b>Input</b>: the user types ${s.read.map(r => fmt(given[r])).join(" and ")}. ${s.read.length > 1 ? "They are" : "It is"} stored in ${s.read.join(" and ")}.`;
+    } else if (s.type === "process") {
+      mem[s.set] = s.calc(mem); changed.push(s.set);
+      msg = `<b>Process</b>: the computer calculates ${s.explain ? s.explain(mem) : fmt(mem[s.set], kinds[s.set])} and stores it in ${s.set}.`;
+    } else if (s.type === "decision") {
+      const yes = s.test(mem);
+      msg = `<b>Decision</b>: is ${s.explain ? s.explain(mem) : s.label}? ${yes ? "<b>YES</b>" : "<b>NO</b>"}, so the program follows the ${yes ? "YES" : "NO"} arrow.`;
+    } else if (s.type === "output") {
+      out.push(s.print.map(p => fmt(mem[p], kinds[p])).join(" "));
+      msg = `<b>Output</b>: the value${s.print.length > 1 ? "s" : ""} of ${s.print.join(" and ")} ${s.print.length > 1 ? "are" : "is"} printed on the screen.`;
+    }
+  });
+  return { mem, out, msg, changed };
+}
+
+function render() {
+  const route = path();
+  step = Math.min(step, route.length);
+  const { mem, out, msg, changed } = run(route);
+  const walked = route.slice(0, step), activeIdx = step ? route[step - 1] : -1;
+  nodeEls.forEach((g, i) => {
+    g.classList.toggle("active", i === activeIdx);
+    g.classList.toggle("done", i !== activeIdx && walked.includes(i));
+  });
+  const doneEdges = new Set();
+  for (let k = 0; k + 1 < walked.length; k++) doneEdges.add(`${walked[k]}>${walked[k + 1]}`);
+  Object.entries(edgeEls).forEach(([key, { p, lt }]) => {
+    const d = doneEdges.has(key);
+    p.classList.toggle("done", d); p.setAttribute("marker-end", d ? "url(#ahd)" : "url(#ah)");
+    if (lt) lt.classList.toggle("done", d);
+  });
+  const ln = activeIdx >= 0 ? algo.steps[activeIdx].line : undefined;
+  const lines = ln === undefined ? [] : [].concat(ln);
+  [...$("code").children].forEach((l, i) => l.classList.toggle("cur", lines.includes(i)));
+  [...$("vars").children].forEach(tr => {
+    const name = tr.dataset.v, has = name in mem;
+    tr.querySelector(".val").innerHTML = has ? esc(fmt(mem[name], kinds[name])) : '<span class="empty">—</span>';
+    tr.classList.toggle("flash", changed.includes(name));
+  });
+  $("console").textContent = out.join("\n") || " ";
+  $("status").innerHTML = msg;
+  $("back").disabled = step === 0;
+  $("next").disabled = step === route.length;
+  $("next").textContent = step === 0 ? "Start ▶" : "Next step ▶";
+}
+
+function go(d) { step = Math.max(0, step + d); render(); }
+function atEnd() { return step >= path().length; }
+function stopPlay() { clearInterval(timer); timer = null; $("play").textContent = "Auto-play"; }
+function togglePlay() {
+  if (timer) return stopPlay();
+  if (atEnd()) step = 0;
+  $("play").textContent = "Pause"; go(1);
+  timer = setInterval(() => { if (atEnd()) stopPlay(); else go(1); }, 1600);
+}
+function switchBy(d) {
+  const i = ALGORITHMS.indexOf(algo), j = (i + d + ALGORITHMS.length) % ALGORITHMS.length;
+  load(ALGORITHMS[j].id);
+}
+
+$("next").onclick = () => { stopPlay(); go(1); };
+$("back").onclick = () => { stopPlay(); go(-1); };
+$("play").onclick = togglePlay;
+$("reset").onclick = () => { stopPlay(); step = 0; render(); };
+
+document.addEventListener("keydown", e => {
+  const t = e.target.tagName;
+  if (t === "INPUT" || t === "SELECT") return;
+  if (t === "BUTTON" && (e.key === " " || e.key === "Enter")) return;
+  if (["ArrowRight", " ", "Enter", "PageDown", "ArrowDown"].includes(e.key)) { e.preventDefault(); stopPlay(); go(1); }
+  else if (["ArrowLeft", "PageUp", "ArrowUp"].includes(e.key)) { e.preventDefault(); stopPlay(); go(-1); }
+  else if (e.key === "r" || e.key === "R") { stopPlay(); step = 0; render(); }
+  else if (e.key === "]") switchBy(1);
+  else if (e.key === "[") switchBy(-1);
+});
+
+load((location.hash || "").slice(1));
+</script>
+
+</body></html>
