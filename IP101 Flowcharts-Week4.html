@@ -117,7 +117,7 @@ table.vars { width: 100%; border-collapse: collapse; font-family: var(--font-mon
 .vars tr.flash td.val { color: var(--accent); }
 .vars .empty { color: var(--muted); font-weight: 400; }
 
-pre.code { margin: 0; font: .95rem/1.7 var(--font-mono); overflow-x: auto; }
+pre.code { margin: 0; font: .95rem/1.7 var(--font-mono); overflow: auto; max-height: 28rem; position: relative; }
 pre.code > span { display: block; padding: 0 8px; border-radius: 4px; border-left: 3px solid transparent; white-space: pre; }
 pre.code > span.cur { background: var(--accent-soft); border-left-color: var(--accent); }
 pre.code .ln { color: var(--muted); margin-right: 10px; }
@@ -627,6 +627,292 @@ const ALGORITHMS = [
         line: 5, row: 5, say: "Print \"leap year\"" },
       { id: "end", type: "end", label: "END", row: 6 }
     ]
+  },
+  {
+    id: "calculator",
+    title: "Simple calculator",
+    task: "Ask the user to enter two numbers and an operator (+, -, *, /). Use conditionals to perform the correct operation and print the result. Handle division by zero with an appropriate message.",
+    define: {
+      Problem: "Apply the arithmetic operation the user chooses to two numbers.",
+      Inputs: "num1 and num2 (decimal numbers, float) and op, the operator (text, str).",
+      Output: "The result, or an error message for division by zero or an unknown operator.",
+      Method: "Compare op with each operator in an if / elif chain. Check \"/ with num2 == 0\" before the normal division, so the division never runs with 0."
+    },
+    vars: [{ name: "num1", kind: "float" }, { name: "num2", kind: "float" }, { name: "op", kind: "str" }],
+    inputs: { num1: 12, num2: 4, op: "/" },
+    python: [
+      'num1 = float(input("Enter the first number: "))',
+      'num2 = float(input("Enter the second number: "))',
+      'op = input("Enter an operator (+, -, *, /): ")',
+      "",
+      'if op == "+":',
+      '    print("Result:", num1 + num2)',
+      'elif op == "-":',
+      '    print("Result:", num1 - num2)',
+      'elif op == "*":',
+      '    print("Result:", num1 * num2)',
+      'elif op == "/" and num2 == 0:',
+      '    print("Error: division by zero is not allowed.")',
+      'elif op == "/":',
+      '    print("Result:", num1 / num2)',
+      "else:",
+      '    print("Invalid operator. Please use +, -, * or /.")'
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT num1, num2, op", read: ["num1", "num2", "op"],
+        prompts: { num1: "Enter the first number: ", num2: "Enter the second number: ", op: "Enter an operator (+, -, *, /): " },
+        line: [0, 1, 2], row: 1 },
+      { id: "dAdd", type: "decision", label: 'op == "+"', labels: ["True", "False"], test: v => v.op === "+",
+        explain: v => `'${v.op}' == '+'`, yes: "pAdd", no: "dSub", line: 4, row: 2,
+        say: "Is op \"+\"? Then print num1 + num2 and go to step 14." },
+      { id: "pAdd", type: "output", label: "PRINT num1 + num2", print: [], text: v => `Result: ${fmt(v.num1 + v.num2, "float")}`,
+        explain: v => `${fmt(v.num1, "float")} + ${fmt(v.num2, "float")} = ${fmt(v.num1 + v.num2, "float")} is printed.`,
+        line: 5, row: 2, col: 1, next: "end", say: "Print num1 + num2, then go to step 14" },
+      { id: "dSub", type: "decision", label: 'op == "-"', labels: ["True", "False"], test: v => v.op === "-",
+        explain: v => `'${v.op}' == '-'`, yes: "pSub", no: "dMul", line: 6, row: 3,
+        say: "Otherwise, is op \"-\"? Then print num1 - num2." },
+      { id: "pSub", type: "output", label: "PRINT num1 - num2", print: [], text: v => `Result: ${fmt(v.num1 - v.num2, "float")}`,
+        explain: v => `${fmt(v.num1, "float")} - ${fmt(v.num2, "float")} = ${fmt(v.num1 - v.num2, "float")} is printed.`,
+        line: 7, row: 3, col: 1, next: "end", say: "Print num1 - num2, then go to step 14" },
+      { id: "dMul", type: "decision", label: 'op == "*"', labels: ["True", "False"], test: v => v.op === "*",
+        explain: v => `'${v.op}' == '*'`, yes: "pMul", no: "dZero", line: 8, row: 4,
+        say: "Otherwise, is op \"*\"? Then print num1 * num2." },
+      { id: "pMul", type: "output", label: "PRINT num1 * num2", print: [], text: v => `Result: ${fmt(v.num1 * v.num2, "float")}`,
+        explain: v => `${fmt(v.num1, "float")} * ${fmt(v.num2, "float")} = ${fmt(v.num1 * v.num2, "float")} is printed.`,
+        line: 9, row: 4, col: 1, next: "end", say: "Print num1 * num2, then go to step 14" },
+      { id: "dZero", type: "decision", label: 'op == "/" and num2 == 0', labels: ["True", "False"],
+        test: v => v.op === "/" && v.num2 === 0,
+        explain: v => `'${v.op}' == '/' and ${fmt(v.num2, "float")} == 0`,
+        note: (yes, v) => v.op === "/" && !yes ? "The operator is /, but num2 is not 0, so dividing is safe." : "",
+        yes: "pZero", no: "dDiv", line: 10, row: 5,
+        say: "Otherwise, is op \"/\" and num2 equal to 0? Then print an error message." },
+      { id: "pZero", type: "output", label: "PRINT error message", print: [],
+        text: () => "Error: division by zero is not allowed.",
+        explain: () => "Dividing by 0 is not possible, so an error message is printed instead of a result. The program does not crash.",
+        line: 11, row: 5, col: 1, next: "end", say: "Print the division-by-zero message, then go to step 14" },
+      { id: "dDiv", type: "decision", label: 'op == "/"', labels: ["True", "False"], test: v => v.op === "/",
+        explain: v => `'${v.op}' == '/'`, yes: "pDiv", no: "pBad", line: 12, row: 6,
+        say: "Otherwise, is op \"/\"? Then print num1 / num2." },
+      { id: "pDiv", type: "output", label: "PRINT num1 / num2", print: [], text: v => `Result: ${fmt(v.num1 / v.num2, "float")}`,
+        explain: v => `${fmt(v.num1, "float")} / ${fmt(v.num2, "float")} = ${fmt(v.num1 / v.num2, "float")} is printed.`,
+        line: 13, row: 6, col: 1, next: "end", say: "Print num1 / num2, then go to step 14" },
+      { id: "pBad", type: "output", label: "PRINT invalid operator", print: [],
+        text: () => "Invalid operator. Please use +, -, * or /.",
+        explain: v => `'${v.op}' matches none of the four operators, so the else block prints a message.`,
+        line: [14, 15], row: 7, say: "Otherwise (else): print \"invalid operator\"" },
+      { id: "end", type: "end", label: "END", row: 8 }
+    ]
+  },
+  {
+    id: "password",
+    title: "Password strength checker",
+    task: "Validate password security and give a strength rating. Criteria: (1) minimum 8 characters, (2) at least one special character (!@#$%^&*), (3) no common words (password, 12345, qwerty). Rating: 0 criteria Weak, 1 Medium, 2 Strong, 3 Very Strong. Show ✓ or ✗ for each criterion, the strength level, a percentage score and improvement suggestions.",
+    tall: true,
+    define: {
+      Problem: "Rate how secure a password is by counting how many of the 3 criteria it meets.",
+      Inputs: "password: the text to check (str).",
+      Output: "✓ / ✗ per criterion, the score, the strength level, the percentage and suggestions.",
+      Method: "Start score at 0 and add 1 for each criterion met, remembering each result in a True/False variable. Then turn the score into a strength level and a percentage (score × 100 / 3), and use the True/False variables to choose the suggestions."
+    },
+    vars: [{ name: "password", kind: "str" }, { name: "score", kind: "int" },
+           { name: "has_min_length", kind: "bool" }, { name: "has_special", kind: "bool" },
+           { name: "no_common_words", kind: "bool" }, { name: "strength", kind: "str" },
+           { name: "percentage", kind: "float" }],
+    inputs: { password: "qwerty!" },
+    python: [
+      "#!/usr/bin/env python3",
+      "# Password Strength Validator",
+      "",
+      "# Ask user for password",
+      "password = input(\"Enter a password to check: \")",
+      "",
+      "print()",
+      "print(\"=\" * 50)",
+      "print(\"PASSWORD STRENGTH ANALYSIS\")",
+      "print(\"=\" * 50)",
+      "print()",
+      "",
+      "# Criterion counter",
+      "score = 0",
+      "",
+      "# 1. Minimum 8 characters",
+      "#has_min_length = len(password) >= 8",
+      "has_min_length = False",
+      "if len(password) >= 8:",
+      "    print(\"✓ Minimum 8 characters\")",
+      "    score = score + 1",
+      "    has_min_length = True",
+      "else:",
+      "    print(\"✗ Minimum 8 characters\")",
+      "",
+      "# 2. At least one special character",
+      "#special_chars = \"!@#$%^&*\"",
+      "has_special = False",
+      "if \"!\" in password:",
+      "    has_special = True",
+      "elif \"@\" in password:",
+      "    has_special = True",
+      "elif \"#\" in password:",
+      "    has_special = True",
+      "elif \"$\" in password:",
+      "    has_special = True",
+      "elif \"%\" in password:",
+      "    has_special = True",
+      "elif \"^\" in password:",
+      "    has_special = True",
+      "elif \"&\" in password:",
+      "    has_special = True",
+      "elif \"*\" in password:",
+      "    has_special = True",
+      "",
+      "if has_special:",
+      "    print(\"✓ At least one special character (!@#$%^&*)\")",
+      "    score = score + 1",
+      "else:",
+      "    print(\"✗ At least one special character (!@#$%^&*)\")",
+      "",
+      "# 3. No common words",
+      "#common_words = [\"password\", \"12345\", \"qwerty\"]",
+      "password_lower = password.lower()",
+      "no_common_words = True",
+      "",
+      "if \"password\" in password_lower:",
+      "    no_common_words = False",
+      "elif \"12345\" in password_lower:",
+      "    no_common_words = False",
+      "elif \"qwerty\" in password_lower:",
+      "    no_common_words = False",
+      "",
+      "if no_common_words:",
+      "    print(\"✓ No common words (password, 12345, qwerty)\")",
+      "    score = score + 1",
+      "else:",
+      "    print(\"✗ No common words (password, 12345, qwerty)\")",
+      "",
+      "print()",
+      "print(\"-\" * 50)",
+      "",
+      "# Determine strength level",
+      "if score < 1:",
+      "    strength = \"Weak\"",
+      "elif score < 2:",
+      "    strength = \"Medium\"",
+      "elif score <3:",
+      "    strength = \"Strong\"",
+      "else:",
+      "    strength = \"Very Strong\"",
+      "",
+      "# Calculate percentage",
+      "percentage = (score * 100) / 3",
+      "",
+      "# Display results",
+      "print(\"Score: %d/3 criteria met\" % score)",
+      "print(\"Strength: %s\" % strength)",
+      "print(\"Percentage: %.0f%%\" % percentage)",
+      "print()",
+      "",
+      "# Improvement suggestions",
+      "print(\"SUGGESTIONS FOR IMPROVEMENT:\")",
+      "if not has_min_length:",
+      "    print(\"  - Minimum length 8 characters\")",
+      "if not has_special:",
+      "    print(\"  - Add at least one special character (!@#$%^&*)\")",
+      "if not no_common_words:",
+      "    print(\"  - Avoid common words like 'password', '12345', 'qwerty'\")",
+      "",
+      "if score == 3:",
+      "    print(\"  - Your password is very strong! No improvements needed.\")",
+      "",
+      "print(\"=\" * 50)"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT password", read: ["password"],
+        prompts: { password: "Enter a password to check: " }, line: 4, row: 1 },
+      { id: "init", type: "process", label: "PRINT header, score = 0",
+        sets: () => ({ score: 0, has_min_length: false, has_special: false, no_common_words: true }),
+        text: () => "\n" + "=".repeat(50) + "\nPASSWORD STRENGTH ANALYSIS\n" + "=".repeat(50) + "\n",
+        explain: () => "the header is printed and the counter score starts at 0. The three True/False variables get their starting values.",
+        line: [6, 7, 8, 9, 10, 13, 17, 27, 54], row: 2, say: "Print the header and set score = 0" },
+
+      { id: "d1", type: "decision", label: "len(password) >= 8", labels: ["True", "False"],
+        test: v => [...v.password].length >= 8,
+        explain: v => `len('${v.password}') >= 8`,
+        note: (yes, v) => `(the password has ${[...v.password].length} characters)`,
+        yes: "ok1", no: "no1", line: 18, row: 3,
+        say: "Criterion 1: is the password at least 8 characters long?" },
+      { id: "ok1", type: "process", label: "PRINT ✓, score + 1", row: 3, col: 1, next: "d2",
+        sets: v => ({ score: v.score + 1, has_min_length: true }),
+        text: () => "✓ Minimum 8 characters",
+        explain: v => `criterion 1 is met: ✓ is printed, score becomes ${v.score} and has_min_length becomes True.`,
+        line: [19, 20, 21], say: "Yes: print ✓ and add 1 to score" },
+      { id: "no1", type: "output", label: "PRINT ✗", print: [], row: 4,
+        text: () => "✗ Minimum 8 characters",
+        explain: v => `criterion 1 is not met: ✗ is printed and score stays ${v.score}.`,
+        line: [22, 23], say: "No: print ✗" },
+
+      { id: "d2", type: "decision", label: "has special char", labels: ["True", "False"],
+        test: v => [..."!@#$%^&*"].some(c => v.password.includes(c)),
+        explain: v => `'${v.password}' contains one of !@#$%^&*`,
+        note: (yes, v) => yes
+          ? `(the elif chain finds '${[..."!@#$%^&*"].find(c => v.password.includes(c))}' and stops looking)`
+          : "(the elif chain checks all 8 characters and finds none)",
+        yes: "ok2", no: "no2", line: [28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 45], row: 5,
+        say: "Criterion 2: does the password contain a special character (!@#$%^&*)?" },
+      { id: "ok2", type: "process", label: "PRINT ✓, score + 1", row: 5, col: 1, next: "d3",
+        sets: v => ({ score: v.score + 1, has_special: true }),
+        text: () => "✓ At least one special character (!@#$%^&*)",
+        explain: v => `criterion 2 is met: ✓ is printed, score becomes ${v.score} and has_special becomes True.`,
+        line: [46, 47], say: "Yes: print ✓ and add 1 to score" },
+      { id: "no2", type: "output", label: "PRINT ✗", print: [], row: 6,
+        text: () => "✗ At least one special character (!@#$%^&*)",
+        explain: v => `criterion 2 is not met: ✗ is printed and score stays ${v.score}.`,
+        line: [48, 49], say: "No: print ✗" },
+
+      { id: "d3", type: "decision", label: "no common word", labels: ["True", "False"],
+        test: v => !["password", "12345", "qwerty"].some(w => v.password.toLowerCase().includes(w)),
+        explain: v => `'${v.password}' contains none of password, 12345, qwerty`,
+        note: (yes, v) => yes
+          ? "(checked in lower case, so 'Password' would also count)"
+          : `('${["password", "12345", "qwerty"].find(w => v.password.toLowerCase().includes(w))}' was found)`,
+        yes: "ok3", no: "no3", line: [53, 56, 57, 58, 59, 60, 61, 63], row: 7,
+        say: "Criterion 3: is the password free of common words (password, 12345, qwerty)?" },
+      { id: "ok3", type: "process", label: "PRINT ✓, score + 1", row: 7, col: 1, next: "strength",
+        sets: v => ({ score: v.score + 1 }),
+        text: () => "✓ No common words (password, 12345, qwerty)",
+        explain: v => `criterion 3 is met: ✓ is printed and score becomes ${v.score}.`,
+        line: [64, 65], say: "Yes: print ✓ and add 1 to score" },
+      { id: "no3", type: "output", label: "PRINT ✗", print: [], row: 8,
+        sets: () => ({ no_common_words: false }),
+        text: () => "✗ No common words (password, 12345, qwerty)",
+        explain: v => `criterion 3 is not met: ✗ is printed, no_common_words is False and score stays ${v.score}.`,
+        line: [57, 59, 61, 66, 67], say: "No: print ✗" },
+
+      { id: "strength", type: "process", label: "strength from score", row: 9,
+        sets: v => ({ strength: ["Weak", "Medium", "Strong", "Very Strong"][v.score] }),
+        explain: v => `score is ${v.score}, so the if / elif chain sets strength = '${v.strength}' (0 Weak, 1 Medium, 2 Strong, 3 Very Strong).`,
+        line: [73, 74, 75, 76, 77, 78, 79, 80], say: "Choose the strength level from the score (if / elif chain)" },
+      { id: "pct", type: "process", label: "percentage = score * 100 / 3", set: "percentage", row: 10,
+        calc: v => (v.score * 100) / 3,
+        explain: v => `${v.score} * 100 / 3 = ${fmt((v.score * 100) / 3, "float")}`, line: 83 },
+      { id: "results", type: "output", label: "PRINT score, strength, %", print: ["score", "strength", "percentage"], row: 11,
+        text: v => `\n${"-".repeat(50)}\nScore: ${v.score}/3 criteria met\nStrength: ${v.strength}\nPercentage: ${v.percentage.toFixed(0)}%\n`,
+        explain: v => `the results are printed. %.0f rounds ${fmt(v.percentage, "float")} to ${v.percentage.toFixed(0)}, and %% prints a single % sign.`,
+        line: [69, 70, 86, 87, 88, 89], say: "Print the score, the strength and the percentage" },
+      { id: "sugg", type: "output", label: "PRINT suggestions", print: [], row: 12,
+        text: v => ["SUGGESTIONS FOR IMPROVEMENT:",
+          ...(!v.has_min_length ? ["  - Minimum length 8 characters"] : []),
+          ...(!v.has_special ? ["  - Add at least one special character (!@#$%^&*)"] : []),
+          ...(!v.no_common_words ? ["  - Avoid common words like 'password', '12345', 'qwerty'"] : []),
+          ...(v.score === 3 ? ["  - Your password is very strong! No improvements needed."] : []),
+          "=".repeat(50)].join("\n"),
+        explain: v => v.score === 3
+          ? "all criteria are met, so only the 'very strong' message is printed."
+          : `one suggestion is printed for each True/False variable that is False (${3 - v.score} of them). Each check is a separate if, not elif, so several suggestions can appear.`,
+        line: [92, 93, 94, 95, 96, 97, 98, 100, 101, 103], say: "Print a suggestion for each criterion that is not met" },
+      { id: "end", type: "end", label: "END", row: 13 }
+    ]
   }
 ];
 /* ===================================================================== */
@@ -708,6 +994,8 @@ function load(id) {
   $("define").innerHTML = algo.define
     ? Object.entries(algo.define).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("") : "";
 
+  $("svg").style.maxHeight = algo.tall ? "none" : "";   // tall charts scroll with the page instead of shrinking
+  $("code").scrollTop = 0;
   drawChart();
   render();
 }
@@ -833,7 +1121,8 @@ function path() {
   while (i !== undefined && p.length < 200) {
     const s = algo.steps[i]; p.push(i);
     if (s.type === "input" || s.type === "assign") s.read.forEach(n => { mem[n] = given[n]; });
-    if (s.type === "process") mem[s.set] = s.calc(mem);
+    if (s.sets) Object.assign(mem, s.sets(mem));
+    else if (s.type === "process") mem[s.set] = s.calc(mem);
     if (s.type === "decision") { i = idIndex[s.test(mem) ? s.yes : s.no]; continue; }
     const ex = exits(i); i = ex.length ? ex[0].to : undefined;
   }
@@ -854,6 +1143,10 @@ function run(route) {
     } else if (s.type === "assign") {
       s.read.forEach(name => { mem[name] = given[name]; changed.push(name); });
       msg = `<b>Process</b>: the value ${andList(s.read.map(r => fmt(given[r], kinds[r])))} written in the code is stored in ${andList(s.read)}.`;
+    } else if (s.type === "process" && s.sets) {
+      const upd = s.sets(mem); Object.assign(mem, upd); changed.push(...Object.keys(upd));
+      if (s.text) out.push(s.text(mem));
+      msg = `<b>Process</b>: ${s.explain(mem)}`;
     } else if (s.type === "process") {
       mem[s.set] = s.calc(mem); changed.push(s.set);
       msg = `<b>Process</b>: the computer calculates ${s.explain ? s.explain(mem) : fmt(mem[s.set], kinds[s.set])} and stores it in ${s.set}.`;
@@ -865,6 +1158,7 @@ function run(route) {
       } else
       msg = `<b>Decision</b>: is ${s.explain ? s.explain(mem) : s.label}? ${yes ? "<b>YES</b>" : "<b>NO</b>"}, so the program follows the ${yes ? "YES" : "NO"} arrow.`;
     } else if (s.type === "output") {
+      if (s.sets) { const upd = s.sets(mem); Object.assign(mem, upd); changed.push(...Object.keys(upd)); }
       out.push(s.text ? s.text(mem) : s.print.map(p => fmt(mem[p], kinds[p])).join(" "));
       msg = s.explain ? `<b>Output</b>: ${s.explain(mem)}`
         : `<b>Output</b>: the value${s.print.length > 1 ? "s" : ""} of ${andList(s.print)} ${s.print.length > 1 ? "are" : "is"} printed on the screen.`;
@@ -893,6 +1187,12 @@ function render() {
   const ln = activeIdx >= 0 ? algo.steps[activeIdx].line : undefined;
   const lines = ln === undefined ? [] : [].concat(ln);
   [...$("code").children].forEach((l, i) => l.classList.toggle("cur", lines.includes(i)));
+  // Long programs: scroll the Python panel so the highlighted line is in view.
+  const pre = $("code"), cur = pre.querySelector(".cur");
+  if (cur && pre.scrollHeight > pre.clientHeight &&
+      (cur.offsetTop < pre.scrollTop || cur.offsetTop > pre.scrollTop + pre.clientHeight - 40)) {
+    pre.scrollTop = Math.max(0, cur.offsetTop - 40);
+  }
   [...$("algsteps").children].forEach((li, i) => li.classList.toggle("cur", i === activeIdx));
   [...$("vars").children].forEach(tr => {
     const name = tr.dataset.v, has = name in mem;
