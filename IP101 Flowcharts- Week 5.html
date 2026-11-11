@@ -1,0 +1,1405 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>IP101 Flowcharts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: example menu on the left, flowchart canvas in the middle, trace panel (inputs, variables, Python, output) on the right; menu becomes a dropdown and columns stack on narrow screens. */
+:root {
+  --bg: #f5f7fa;
+  --panel: #ffffff;
+  --ink: #0b2a4a;
+  --muted: #5a6b80;
+  --line: #c6d1de;
+  --shape: #ffffff;
+  --accent: #e08a00;
+  --accent-soft: #fff1d6;
+  --done: #2e7d5b;
+  --done-soft: #e3f3ec;
+  --console: #0e2238;
+  --console-fg: #d9f2e4;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1724; --panel: #142233; --ink: #e3ecf6; --muted: #93a5bb; --line: #33475e;
+  --shape: #182a3e; --accent: #ffb23f; --accent-soft: #3d2c10; --done: #5cc79a; --done-soft: #143326;
+  --console: #08121e; --console-fg: #c9f0db; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d1724; --panel: #142233; --ink: #e3ecf6; --muted: #93a5bb; --line: #33475e;
+  --shape: #182a3e; --accent: #ffb23f; --accent-soft: #3d2c10; --done: #5cc79a; --done-soft: #143326;
+  --console: #08121e; --console-fg: #c9f0db; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px; box-sizing: border-box; }
+.wrap { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+
+/* Course header and disclaimer */
+.course { max-width: 1400px; margin: 0 auto 18px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
+.course p { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: .01em; text-wrap: balance; }
+.disclaimer { max-width: 1400px; margin: 28px auto 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.disclaimer p { margin: 0; font-size: .85rem; color: var(--muted); }
+
+/* Menu */
+nav.menu { position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); display: grid; gap: 4px; }
+nav.menu .brand { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: 0 10px 8px; }
+nav.menu a { display: grid; grid-template-columns: 2ch 1fr; gap: 8px; align-items: baseline; text-decoration: none; color: var(--ink);
+  padding: 9px 10px; border-radius: 8px; border: 1px solid transparent; line-height: 1.3; }
+nav.menu a .n { font: 600 .85rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+nav.menu a:hover { background: var(--panel); border-color: var(--line); }
+nav.menu a[aria-current="true"] { background: var(--panel); border-color: var(--ink); font-weight: 700; }
+nav.menu a[aria-current="true"] .n { color: var(--accent); }
+nav.menu a:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.picker { display: none; }
+
+.main { grid-column: 2 / 4; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; min-width: 0; }
+header { grid-column: 1 / -1; display: grid; gap: 6px; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+h1 { margin: 0; font-size: 1.6rem; text-wrap: balance; }
+.task { margin: 0; color: var(--muted); max-width: 70ch; }
+.hint { color: var(--muted); font-size: .85rem; }
+kbd { font-family: var(--font-mono); font-size: .8rem; border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; background: var(--panel); }
+
+.chart { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; }
+.chart svg { display: block; width: 100%; max-height: calc(100vh - 270px); height: auto; }
+.node .sh { fill: var(--shape); stroke: var(--ink); stroke-width: 2; transition: fill .25s, stroke .25s; }
+.node text { fill: var(--ink); font-family: var(--font-mono); font-size: 18px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+.node .tag { font-family: var(--font-body); font-size: 11px; font-weight: 400; fill: var(--muted); letter-spacing: .06em; }
+.node .tag-l { text-anchor: end; }
+.node .tag-r { text-anchor: start; }
+.node.done .sh { fill: var(--done-soft); stroke: var(--done); }
+.node.active .sh { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 3.5; }
+.edge { stroke: var(--line); stroke-width: 2.5; fill: none; transition: stroke .25s; }
+.edge.done { stroke: var(--done); }
+.elabel { font: 700 14px var(--font-body); fill: var(--muted); letter-spacing: .04em; }
+.elabel.done { fill: var(--done); }
+.arrowhead { fill: var(--line); }
+.edge-done-head { fill: var(--done); }
+
+.cardhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+.card .cardhead h2, .chart .cardhead h2 { margin: 0; }
+.chart h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+button.mini { font-size: .8rem; padding: 4px 10px; }
+.veil { transition: filter .25s; }
+.veiled { filter: blur(9px); pointer-events: none; user-select: none; }
+dl.define { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; line-height: 1.45; }
+dl.define dt { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding-top: .2em; }
+dl.define dd { margin: 0; }
+ol.algsteps { margin: 0; padding-left: 1.8em; display: grid; gap: 2px; line-height: 1.5; }
+ol.algsteps li { padding: 2px 8px; border-radius: 4px; border-left: 3px solid transparent; }
+ol.algsteps li.cur { background: var(--accent-soft); border-left-color: var(--accent); font-weight: 700; }
+ol.algsteps li::marker { font-family: var(--font-mono); color: var(--muted); }
+
+.side { display: grid; gap: 14px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card h2 { margin: 0 0 10px; font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.inputs { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.inputs label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.inputs input { font: 600 1.2rem var(--font-mono); width: 6.5rem; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.inputs input.txt { width: 12rem; max-width: 100%; }
+.inputs .tf { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+.inputs input[type="checkbox"] { width: 1.3rem; height: 1.3rem; margin: 0; padding: 0; accent-color: var(--accent); cursor: pointer; }
+.inputs .tfv { font: 600 1.1rem var(--font-mono); color: var(--ink); min-width: 3.2em; }
+.inputs .tfv::before { content: "False"; }
+.inputs input:checked + .tfv::before { content: "True"; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+button, select { font: 700 .95rem var(--font-body); padding: 9px 14px; border-radius: 7px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.status { margin-top: 12px; font-size: 1.05rem; min-height: 3em; }
+.status b { color: var(--accent); }
+
+table.vars { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.vars th, .vars td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.vars th { font: 400 .75rem var(--font-body); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.vars td.val { font-size: 1.15rem; font-weight: 600; overflow-wrap: anywhere; }
+.vars tr.flash td.val { color: var(--accent); }
+.vars .empty { color: var(--muted); font-weight: 400; }
+
+pre.code { margin: 0; font: .95rem/1.7 var(--font-mono); overflow: auto; max-height: 28rem; position: relative; }
+pre.code > span { display: block; padding: 0 8px; border-radius: 4px; border-left: 3px solid transparent; white-space: pre; }
+pre.code > span.cur { background: var(--accent-soft); border-left-color: var(--accent); }
+pre.code .ln { color: var(--muted); margin-right: 10px; }
+
+.console { background: var(--console); color: var(--console-fg); font: .95rem/1.6 var(--font-mono); border-radius: 8px; padding: 10px 12px; min-height: 5.2em; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (max-width: 1050px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); }
+  nav.menu { display: none; }
+  .main { grid-column: 1; }
+  .picker { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .picker select { max-width: 100%; }
+}
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } .chart svg { max-height: none; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="course"><p>Introduction to Programming (IP101)</p></div>
+
+<div class="wrap">
+  <nav class="menu" id="menu" aria-label="Flowchart examples">
+    <div class="brand">Flowchart examples</div>
+  </nav>
+
+  <div class="main">
+    <header>
+      <div class="picker">
+        <label for="pick" class="eyebrow">Example</label>
+        <select id="pick"></select>
+      </div>
+      <div class="eyebrow" id="eyebrow"></div>
+      <h1 id="title"></h1>
+      <p class="task" id="task"></p>
+      <span class="hint"><kbd>→</kbd> / <kbd>Space</kbd> next step · <kbd>←</kbd> back · <kbd>R</kbd> reset · <kbd>[</kbd> <kbd>]</kbd> previous / next example</span>
+    </header>
+
+    <section class="chart" aria-label="Flowchart">
+      <div class="cardhead"><h2>Flowchart</h2><button class="mini" type="button" data-veil="svg" aria-pressed="false">Hide</button></div>
+      <svg id="svg" class="veil" role="img">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>
+          <marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="edge-done-head"/></marker>
+        </defs>
+        <g id="edges"></g>
+        <g id="nodes"></g>
+      </svg>
+    </section>
+
+    <div class="side">
+      <section class="card">
+        <h2 id="tvhead">Test values</h2>
+        <div class="inputs" id="inputs"></div>
+        <div class="controls">
+          <button id="back" type="button">◀ Back</button>
+          <button id="next" class="primary" type="button">Start ▶</button>
+          <button id="play" type="button">Auto-play</button>
+          <button id="toend" type="button">Run to end ⏭</button>
+          <button id="reset" type="button">Reset</button>
+        </div>
+        <div class="status" id="status" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>Variables in memory</h2>
+        <table class="vars">
+          <thead><tr><th>Name</th><th>Value</th></tr></thead>
+          <tbody id="vars"></tbody>
+        </table>
+      </section>
+
+      <section class="card" id="defcard" hidden>
+        <div class="cardhead"><h2>Problem definition</h2><button class="mini" type="button" data-veil="define" aria-pressed="false">Hide</button></div>
+        <dl class="define veil" id="define"></dl>
+      </section>
+
+      <section class="card">
+        <div class="cardhead"><h2>Algorithm in steps</h2><button class="mini" type="button" data-veil="algsteps" aria-pressed="false">Hide</button></div>
+        <ol class="algsteps veil" id="algsteps"></ol>
+      </section>
+
+      <section class="card">
+        <div class="cardhead"><h2>Same algorithm in Python</h2><button class="mini" type="button" data-veil="code" aria-pressed="false">Hide</button></div>
+        <pre class="code veil" id="code"></pre>
+      </section>
+
+      <section class="card">
+        <h2>Output</h2>
+        <div class="console" id="console"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="disclaimer"><p>This interactive webpage was partially created using Claude.AI</p></footer>
+
+<script>
+/* =====================================================================
+   FLOWCHART LIBRARY — add new examples to this list.
+   Each example:
+     id       short token, used as the link anchor (…#square)
+     title    menu + heading text
+     task     the exercise statement
+     vars     variables in memory order: { name, kind: "int" | "float" | "str" | "bool" }
+              (a "bool" test value is a True/False checkbox)
+     decisions may set labels: ["True", "False"] instead of YES / NO
+     inputs   default test values the user can change: { name: value }
+     python   lines of the equivalent Python program
+     steps    one per flowchart shape:
+       { type: "start" | "end" }
+       { type: "input",    label, read: ["A", "B"], line }
+         (optional prompts: { A: "Give A:" } sets the input() prompt text)
+       { type: "assign",   label, read: ["word"], line }
+         (a value written in the code, e.g. word = "notebook": drawn as a process box,
+          takes its value from the test-value field so it can still be changed)
+       { type: "process",  label, set: "Area", calc: v => v.L * v.L, explain: v => "…", line }
+       { type: "decision", label, test: v => v.A > v.B, explain: v => "…", yes: "<id>", no: "<id>", line }
+       { type: "output",   label, print: ["Area", "Perimeter"], line }
+         (optional text: v => "…" sets exactly what the program prints)
+     Optional on any step:
+       say   wording in the "Algorithm in steps" list (default: built from the shape)
+       id    name used by yes / no / next   (default: its position in the list)
+       next  id of the following shape     (default: the next step in the list)
+       row   vertical position             (default: one below the previous step)
+       col   0 = main column, 1 = branch column on the right (default 0)
+     line = index (0-based) of the matching Python line, or a list of indexes.
+   ===================================================================== */
+const ALGORITHMS = [
+  {
+    id: "sum",
+    title: "Sum of two numbers",
+    task: "Read two numbers A and B, calculate their sum and print it.",
+    vars: [{ name: "A", kind: "int" }, { name: "B", kind: "int" }, { name: "SUM", kind: "int" }],
+    inputs: { A: 7, B: 5 },
+    python: [
+      'A = int(input("Enter A: "))',
+      'B = int(input("Enter B: "))',
+      "SUM = A + B",
+      "print(SUM)"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "Input A", read: ["A"], line: 0 },
+      { type: "input", label: "Input B", read: ["B"], line: 1 },
+      { type: "process", label: "SUM = A + B", set: "SUM", calc: v => v.A + v.B,
+        explain: v => `${fmt(v.A)} + ${fmt(v.B)} = ${fmt(v.A + v.B)}`, line: 2 },
+      { type: "output", label: "Print SUM", print: ["SUM"], line: 3 },
+      { type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "square",
+    title: "Area and perimeter of a square",
+    task: "For a square with side L, calculate its area and perimeter.",
+    vars: [{ name: "L", kind: "float" }, { name: "Area", kind: "float" }, { name: "Perimeter", kind: "float" }],
+    inputs: { L: 4 },
+    python: [
+      'L = float(input("Enter L: "))',
+      "Area = L * L",
+      "Perimeter = 4 * L",
+      "print(Area, Perimeter)"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT L", read: ["L"], line: 0 },
+      { type: "process", label: "Area = L x L", set: "Area", calc: v => v.L * v.L,
+        explain: v => `${fmt(v.L)} × ${fmt(v.L)} = ${fmt(v.L * v.L, "float")}`, line: 1 },
+      { type: "process", label: "Perimeter = 4 x L", set: "Perimeter", calc: v => 4 * v.L,
+        explain: v => `4 × ${fmt(v.L)} = ${fmt(4 * v.L, "float")}`, line: 2 },
+      { type: "output", label: "PRINT Area, Perimeter", print: ["Area", "Perimeter"], line: 3 },
+      { type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "max",
+    title: "Larger of two numbers",
+    task: "What is the larger of two numbers A and B?",
+    vars: [{ name: "A", kind: "int" }, { name: "B", kind: "int" }, { name: "MAX", kind: "int" }],
+    inputs: { A: 7, B: 5 },
+    python: [
+      'A = int(input("Enter A: "))',
+      'B = int(input("Enter B: "))',
+      "if A > B:",
+      "    MAX = A",
+      "else:",
+      "    MAX = B",
+      "print(MAX)"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT A,B", read: ["A", "B"], line: [0, 1] },
+      { id: "cmp", type: "decision", label: "A > B ?", test: v => v.A > v.B,
+        explain: v => `${fmt(v.A)} > ${fmt(v.B)}`, yes: "maxA", no: "maxB", line: 2,
+        say: "Is A > B? If YES, go to step 4. If NO, go to step 5." },
+      { id: "maxA", type: "process", label: "MAX = A", set: "MAX", calc: v => v.A,
+        explain: v => `MAX = A = ${fmt(v.A)}`, line: 3, row: 2, col: 1, next: "print",
+        say: "MAX = A, then go to step 6" },
+      { id: "maxB", type: "process", label: "MAX = B", set: "MAX", calc: v => v.B,
+        explain: v => `MAX = B = ${fmt(v.B)}`, line: [4, 5], row: 3 },
+      { id: "print", type: "output", label: "PRINT MAX", print: ["MAX"], line: 6 },
+      { type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "grades",
+    title: "Grades and average",
+    task: "Write a program that shows a student's grades in 3 subjects, S1, S2 and S3, along with the total average grade.",
+    vars: [{ name: "S1", kind: "float" }, { name: "S2", kind: "float" }, { name: "S3", kind: "float" },
+           { name: "Total", kind: "float" }, { name: "Average", kind: "float" }],
+    inputs: { S1: 85, S2: 90, S3: 78 },
+    python: [
+      'S1 = float(input("Enter S1: "))',
+      'S2 = float(input("Enter S2: "))',
+      'S3 = float(input("Enter S3: "))',
+      "Total = S1 + S2 + S3",
+      "Average = Total / 3",
+      'print("S1:", S1, "S2:", S2, "S3:", S3)',
+      'print(f"Average: {Average:.2f}")'
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT S1, S2, S3", read: ["S1", "S2", "S3"], line: [0, 1, 2] },
+      { type: "process", label: "Total = S1 + S2 + S3", set: "Total", calc: v => v.S1 + v.S2 + v.S3,
+        explain: v => `${fmt(v.S1, "float")} + ${fmt(v.S2, "float")} + ${fmt(v.S3, "float")} = ${fmt(v.S1 + v.S2 + v.S3, "float")}`, line: 3 },
+      { type: "process", label: "Average = Total / 3", set: "Average", calc: v => v.Total / 3,
+        explain: v => `${fmt(v.Total, "float")} / 3 = ${fmt(v.Total / 3, "float")}`, line: 4 },
+      { type: "output", label: "PRINT S1, S2, S3, Average", print: ["S1", "S2", "S3", "Average"],
+        text: v => `S1: ${fmt(v.S1, "float")} S2: ${fmt(v.S2, "float")} S3: ${fmt(v.S3, "float")}\nAverage: ${v.Average.toFixed(2)}`,
+        line: [5, 6] },
+      { type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "triangle",
+    title: "Area of a triangle (3-sides formula)",
+    task: "Compute the area of any triangle from its three sides a, b and c, and print it. Area = √(s(s − a)(s − b)(s − c)), where s = (a + b + c) / 2 is the semi-perimeter. Use a = 5, b = 5, c = 2.",
+    define: {
+      Problem: "Find the area of a triangle when only the lengths of its three sides are known.",
+      Inputs: "The three sides a, b and c (decimal numbers, float).",
+      Output: "The area of the triangle (float).",
+      Method: "First compute the semi-perimeter s = (a + b + c) / 2, then Area = √(s(s − a)(s − b)(s − c))."
+    },
+    vars: [{ name: "a", kind: "float" }, { name: "b", kind: "float" }, { name: "c", kind: "float" },
+           { name: "s", kind: "float" }, { name: "Area", kind: "float" }],
+    inputs: { a: 5, b: 5, c: 2 },
+    python: [
+      'a = float(input("Enter a: "))',
+      'b = float(input("Enter b: "))',
+      'c = float(input("Enter c: "))',
+      "s = (a + b + c) / 2",
+      "Area = (s * (s - a) * (s - b) * (s - c)) ** 0.5",
+      'print("Area:", Area)'
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT a, b, c", read: ["a", "b", "c"], line: [0, 1, 2] },
+      { type: "process", label: "s = (a + b + c) / 2", set: "s", calc: v => (v.a + v.b + v.c) / 2,
+        explain: v => `(${fmt(v.a, "float")} + ${fmt(v.b, "float")} + ${fmt(v.c, "float")}) / 2 = ${fmt((v.a + v.b + v.c) / 2, "float")}`, line: 3 },
+      { type: "process", label: "Area = √(s(s−a)(s−b)(s−c))", set: "Area",
+        calc: v => { const p = v.s * (v.s - v.a) * (v.s - v.b) * (v.s - v.c); return p < 0 ? NaN : Math.sqrt(p); },
+        explain: v => {
+          const f = x => fmt(x, "float"), p = v.s * (v.s - v.a) * (v.s - v.b) * (v.s - v.c);
+          const head = `√(${f(v.s)} × ${f(v.s - v.a)} × ${f(v.s - v.b)} × ${f(v.s - v.c)}) = √${f(p)}`;
+          return p < 0 ? `${head}, which is not a real number because these sides cannot form a triangle,`
+                       : `${head} = ${f(Math.sqrt(p))}`;
+        }, line: 4 },
+      { type: "output", label: "PRINT Area", print: ["Area"],
+        text: v => Number.isNaN(v.Area)
+          ? "Area: (a complex number: these sides do not form a triangle)"
+          : `Area: ${fmt(v.Area, "float")}`, line: 5 },
+      { type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "minutes",
+    title: "Minutes to hours and minutes",
+    task: "Read a large number of minutes from the keyboard (such as 845) and convert it into hours and remaining minutes, e.g. 845 minutes = 14 hours and 5 minutes. Use integer division (//) and the modulo operator (%), store each result in its own variable, and print a formatted message.",
+    define: {
+      Problem: "Express a number of minutes as whole hours plus the minutes left over.",
+      Inputs: "minutes: the total number of minutes (whole number, int).",
+      Output: "A message with the original minutes, the hours and the remaining minutes.",
+      Method: "There are 60 minutes in an hour. hours = minutes // 60 (how many full hours fit), newminutes = minutes % 60 (what is left over)."
+    },
+    vars: [{ name: "minutes", kind: "int" }, { name: "hours", kind: "int" }, { name: "newminutes", kind: "int" }],
+    inputs: { minutes: 845 },
+    python: [
+      'minutes = int(input("Give minutes:"))',
+      "hours = minutes // 60",
+      "newminutes = minutes % 60",
+      'print(f"{minutes} minutes equals to {hours} hours and {newminutes} minutes")'
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT minutes", read: ["minutes"], prompts: { minutes: "Give minutes:" }, line: 0 },
+      { type: "process", label: "hours = minutes // 60", set: "hours", calc: v => Math.floor(v.minutes / 60),
+        explain: v => `${v.minutes} // 60 = ${Math.floor(v.minutes / 60)} (60 fits ${Math.floor(v.minutes / 60)} whole times into ${v.minutes})`, line: 1 },
+      { type: "process", label: "newminutes = minutes % 60", set: "newminutes", calc: v => ((v.minutes % 60) + 60) % 60,
+        explain: v => { const h = Math.floor(v.minutes / 60), r = ((v.minutes % 60) + 60) % 60;
+          return `${v.minutes} % 60 = ${r} (the remainder: ${v.minutes} − ${h} × 60 = ${r})`; }, line: 2 },
+      { type: "output", label: "PRINT minutes, hours, newminutes", print: ["minutes", "hours", "newminutes"],
+        text: v => `${v.minutes} minutes equals to ${v.hours} hours and ${v.newminutes} minutes`, line: 3 },
+      { type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "notebook",
+    title: "Swap the halves of a word",
+    task: "Take the word 'notebook' and cut it in half through the middle. Then concatenate the two resulting strings by placing the second part first and the first part second. Print the new word, as well as its final letter.",
+    define: {
+      Problem: "Split a word in the middle and join the two halves in reverse order.",
+      Inputs: "word: the text to work on (string, str), here 'notebook'.",
+      Output: "The two halves, and the new word with the halves swapped.",
+      Method: "middle = len(word) // 2. Slice word[:middle] and word[middle:], then join them with + in the opposite order."
+    },
+    vars: [{ name: "word", kind: "str" }, { name: "middle", kind: "int" },
+           { name: "firsthalf", kind: "str" }, { name: "secondhalf", kind: "str" }, { name: "newword", kind: "str" }],
+    inputs: { word: "notebook" },
+    python: [
+      'word = "notebook"',
+      "",
+      "middle = len(word)//2",
+      "",
+      "#split",
+      "firsthalf = word[:middle]",
+      "secondhalf = word[middle:]",
+      "",
+      'print("First half:", firsthalf)',
+      'print("Second half:", secondhalf)',
+      "",
+      "newword = secondhalf + firsthalf",
+      "print(newword)",
+      "print(newword[-1])"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "assign", label: 'word = "notebook"', read: ["word"], line: 0 },
+      { type: "process", label: "middle = len(word) // 2", set: "middle", calc: v => Math.floor(v.word.length / 2),
+        explain: v => `len('${v.word}') // 2 = ${v.word.length} // 2 = ${Math.floor(v.word.length / 2)}`, line: 2 },
+      { type: "process", label: "firsthalf = word[:middle]", set: "firsthalf", calc: v => v.word.slice(0, v.middle),
+        explain: v => `'${v.word}'[:${v.middle}] = '${v.word.slice(0, v.middle)}' (characters 0 to ${v.middle - 1})`, line: [4, 5] },
+      { type: "process", label: "secondhalf = word[middle:]", set: "secondhalf", calc: v => v.word.slice(v.middle),
+        explain: v => `'${v.word}'[${v.middle}:] = '${v.word.slice(v.middle)}' (character ${v.middle} to the end)`, line: 6 },
+      { type: "output", label: "PRINT firsthalf, secondhalf", print: ["firsthalf", "secondhalf"],
+        text: v => `First half: ${v.firsthalf}\nSecond half: ${v.secondhalf}`, line: [8, 9] },
+      { type: "process", label: "newword = secondhalf + firsthalf", set: "newword", calc: v => v.secondhalf + v.firsthalf,
+        explain: v => `'${v.secondhalf}' + '${v.firsthalf}' = '${v.secondhalf + v.firsthalf}'`, line: 11 },
+      { type: "output", label: "PRINT newword", print: ["newword"], text: v => v.newword, line: 12 },
+      { type: "output", label: "PRINT newword[-1]", print: ["newword"], text: v => v.newword.slice(-1),
+        say: "Print the final letter of newword",
+        explain: v => `newword[-1] is the last character of '${v.newword}', so '${v.newword.slice(-1)}' is printed on the screen. Index -1 always counts from the end.`,
+        line: 13 },
+      { type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "elif",
+    title: "if / elif / else chain",
+    task: "Python checks the conditions from top to bottom. Only the block of the first condition that is True runs; every condition after it is skipped. If no condition is True, the else block runs. Switch the conditions between True and False and step through.",
+    vars: [{ name: "condition1", kind: "bool" }, { name: "condition2", kind: "bool" }, { name: "condition3", kind: "bool" }],
+    inputs: { condition1: false, condition2: true, condition3: true },
+    preset: true,   // the conditions already have values when the chain starts
+    python: [
+      "if condition1:",
+      "    # runs if condition1 is True",
+      '    print("Block 1")',
+      "elif condition2:",
+      "    # runs if condition1 is False AND condition2 is True",
+      '    print("Block 2")',
+      "elif condition3:",
+      "    # runs if condition1 and condition2 are False AND condition3 is True",
+      '    print("Block 3")',
+      "else:",
+      "    # runs if all conditions are False",
+      '    print("Block 4")'
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { id: "c1", type: "decision", label: "condition1 ?", labels: ["True", "False"], test: v => v.condition1,
+        explain: () => "condition1", line: 0, row: 1, yes: "b1", no: "c2",
+        say: "Is condition1 True? Then run Block 1 and skip the rest (go to step 9).",
+        note: yes => yes ? "Block 1 runs; the elif and else parts are skipped." : "Block 1 is skipped; Python checks the next condition." },
+      { id: "b1", type: "output", label: 'PRINT "Block 1"', print: [], text: () => "Block 1", line: [1, 2], row: 1, col: 1, next: "end",
+        explain: () => "Block 1 runs because condition1 is True.", say: "Block 1, then go to step 9" },
+      { id: "c2", type: "decision", label: "condition2 ?", labels: ["True", "False"], test: v => v.condition2,
+        explain: () => "condition2", line: 3, row: 2, yes: "b2", no: "c3",
+        say: "Otherwise, is condition2 True? Then run Block 2 (go to step 9 after).",
+        note: yes => yes ? "Block 2 runs; the rest is skipped, even if condition3 is True." : "Block 2 is skipped; Python checks the next condition." },
+      { id: "b2", type: "output", label: 'PRINT "Block 2"', print: [], text: () => "Block 2", line: [4, 5], row: 2, col: 1, next: "end",
+        explain: () => "Block 2 runs because condition1 is False and condition2 is True.", say: "Block 2, then go to step 9" },
+      { id: "c3", type: "decision", label: "condition3 ?", labels: ["True", "False"], test: v => v.condition3,
+        explain: () => "condition3", line: 6, row: 3, yes: "b3", no: "b4",
+        say: "Otherwise, is condition3 True? Then run Block 3 (go to step 9 after).",
+        note: yes => yes ? "Block 3 runs; the else block is skipped." : "No condition was True, so the else block runs." },
+      { id: "b3", type: "output", label: 'PRINT "Block 3"', print: [], text: () => "Block 3", line: [7, 8], row: 3, col: 1, next: "end",
+        explain: () => "Block 3 runs because condition1 and condition2 are False and condition3 is True.", say: "Block 3, then go to step 9" },
+      { id: "b4", type: "output", label: 'PRINT "Block 4"', print: [], text: () => "Block 4", line: [9, 10, 11], row: 4,
+        explain: () => "Block 4 (else) runs because all three conditions are False.", say: "Otherwise (else): Block 4" },
+      { id: "end", type: "end", label: "END", row: 5 }
+    ]
+  },
+  {
+    id: "leap",
+    title: "Leap year",
+    task: "Write a program that identifies if a given year is a leap year. Rule 1: a year is a leap year if it is divisible by 4. Rule 2: however, if it is divisible by 100, it is not a leap year. Rule 3: unless it is also divisible by 400, in which case it is a leap year.",
+    define: {
+      Problem: "Decide whether a year is a leap year using the three divisibility rules.",
+      Inputs: "year: a whole number (int).",
+      Output: "A message saying whether the year is a leap year or not.",
+      Method: "\"Divisible by n\" means year % n == 0. Check the most specific rule first: 400, then 100, then 4. The first condition that is True decides the answer."
+    },
+    vars: [{ name: "year", kind: "int" }],
+    inputs: { year: 1900 },
+    python: [
+      'year = int(input("Enter a year: "))',
+      "",
+      "if year % 400 == 0:          # Rule 3",
+      '    print(year, "is a leap year")',
+      "elif year % 100 == 0:        # Rule 2",
+      '    print(year, "is not a leap year")',
+      "elif year % 4 == 0:          # Rule 1",
+      '    print(year, "is a leap year")',
+      "else:",
+      '    print(year, "is not a leap year")'
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT year", read: ["year"], prompts: { year: "Enter a year: " }, line: 0, row: 1 },
+      { id: "d400", type: "decision", label: "year % 400 == 0", labels: ["True", "False"], test: v => v.year % 400 === 0,
+        explain: v => `${v.year} % 400 == 0`, note: (yes, v) => `(${v.year} % 400 = ${v.year % 400})`,
+        yes: "leap1", no: "d100", line: 2, row: 2,
+        say: "Is year divisible by 400? If yes, it is a leap year (Rule 3), go to step 10." },
+      { id: "leap1", type: "output", label: "PRINT leap year", print: [], text: v => `${v.year} is a leap year`,
+        explain: v => `${v.year} is divisible by 400, so it is a leap year (Rule 3).`,
+        line: 3, row: 2, col: 1, next: "end", say: "Print \"leap year\", then go to step 10" },
+      { id: "d100", type: "decision", label: "year % 100 == 0", labels: ["True", "False"], test: v => v.year % 100 === 0,
+        explain: v => `${v.year} % 100 == 0`, note: (yes, v) => `(${v.year} % 100 = ${v.year % 100})`,
+        yes: "not1", no: "d4", line: 4, row: 3,
+        say: "Otherwise, is year divisible by 100? If yes, it is not a leap year (Rule 2), go to step 10." },
+      { id: "not1", type: "output", label: "PRINT not leap year", print: [], text: v => `${v.year} is not a leap year`,
+        explain: v => `${v.year} is divisible by 100 but not by 400, so it is not a leap year (Rule 2).`,
+        line: 5, row: 3, col: 1, next: "end", say: "Print \"not a leap year\", then go to step 10" },
+      { id: "d4", type: "decision", label: "year % 4 == 0", labels: ["True", "False"], test: v => v.year % 4 === 0,
+        explain: v => `${v.year} % 4 == 0`, note: (yes, v) => `(${v.year} % 4 = ${v.year % 4})`,
+        yes: "leap2", no: "not2", line: 6, row: 4,
+        say: "Otherwise, is year divisible by 4? If yes, it is a leap year (Rule 1), go to step 10." },
+      { id: "leap2", type: "output", label: "PRINT leap year", print: [], text: v => `${v.year} is a leap year`,
+        explain: v => `${v.year} is divisible by 4 but not by 100, so it is a leap year (Rule 1).`,
+        line: 7, row: 4, col: 1, next: "end", say: "Print \"leap year\", then go to step 10" },
+      { id: "not2", type: "output", label: "PRINT not leap year", print: [], text: v => `${v.year} is not a leap year`,
+        explain: v => `${v.year} is not divisible by 4, so it is not a leap year.`,
+        line: [8, 9], row: 5, say: "Otherwise (else): print \"not a leap year\"" },
+      { id: "end", type: "end", label: "END", row: 6 }
+    ]
+  },
+  {
+    id: "leapnested",
+    title: "Leap year (nested ifs)",
+    task: "The same leap year problem, solved with nested conditionals: each rule is checked inside the previous one. Rule 1: divisible by 4 → leap year. Rule 2: but divisible by 100 → not a leap year. Rule 3: unless also divisible by 400 → leap year.",
+    define: {
+      Problem: "Decide whether a year is a leap year using the three divisibility rules.",
+      Inputs: "year: a whole number (int).",
+      Output: "A message saying whether the year is a leap year or not.",
+      Method: "Follow the rules in the order they are written. Only if Rule 1 holds (÷4) do we look at Rule 2 (÷100), and only if Rule 2 holds do we look at Rule 3 (÷400)."
+    },
+    vars: [{ name: "year", kind: "int" }],
+    inputs: { year: 1900 },
+    python: [
+      'year = int(input("Enter a year: "))',
+      "",
+      "if year % 4 == 0:                  # Rule 1",
+      "    if year % 100 == 0:            # Rule 2",
+      "        if year % 400 == 0:        # Rule 3",
+      '            print(year, "is a leap year")',
+      "        else:",
+      '            print(year, "is not a leap year")',
+      "    else:",
+      '        print(year, "is a leap year")',
+      "else:",
+      '    print(year, "is not a leap year")'
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT year", read: ["year"], prompts: { year: "Enter a year: " }, line: 0, row: 1 },
+      { id: "d4", type: "decision", label: "year % 4 == 0", labels: ["True", "False"], test: v => v.year % 4 === 0,
+        explain: v => `${v.year} % 4 == 0`,
+        note: (yes, v) => `(${v.year} % 4 = ${v.year % 4})` + (yes ? " Rule 1 holds, so Python goes inside this if and checks Rule 2." : ""),
+        yes: "d100", no: "nA", line: 2, row: 2,
+        say: "Is year divisible by 4? If no, go to step 4. If yes, go to step 5." },
+      { id: "nA", type: "output", label: "PRINT not leap year", print: [], text: v => `${v.year} is not a leap year`,
+        explain: v => `${v.year} is not divisible by 4, so it is not a leap year. The inner ifs are never checked.`,
+        line: [10, 11], row: 2, col: 1, next: "end", say: "Print \"not a leap year\", then go to step 10" },
+      { id: "d100", type: "decision", label: "year % 100 == 0", labels: ["True", "False"], test: v => v.year % 100 === 0,
+        explain: v => `${v.year} % 100 == 0`,
+        note: (yes, v) => `(${v.year} % 100 = ${v.year % 100})` + (yes ? " Rule 2 applies, so Python goes one level deeper and checks Rule 3." : ""),
+        yes: "d400", no: "lB", line: 3, row: 3,
+        say: "Is year divisible by 100? If no, go to step 6. If yes, go to step 7." },
+      { id: "lB", type: "output", label: "PRINT leap year", print: [], text: v => `${v.year} is a leap year`,
+        explain: v => `${v.year} is divisible by 4 but not by 100, so it is a leap year (Rule 1).`,
+        line: [8, 9], row: 3, col: 1, next: "end", say: "Print \"leap year\", then go to step 10" },
+      { id: "d400", type: "decision", label: "year % 400 == 0", labels: ["True", "False"], test: v => v.year % 400 === 0,
+        explain: v => `${v.year} % 400 == 0`, note: (yes, v) => `(${v.year} % 400 = ${v.year % 400})`,
+        yes: "lD", no: "nC", line: 4, row: 4,
+        say: "Is year divisible by 400? If no, go to step 8. If yes, go to step 9." },
+      { id: "nC", type: "output", label: "PRINT not leap year", print: [], text: v => `${v.year} is not a leap year`,
+        explain: v => `${v.year} is divisible by 100 but not by 400, so it is not a leap year (Rule 2).`,
+        line: [6, 7], row: 4, col: 1, next: "end", say: "Print \"not a leap year\", then go to step 10" },
+      { id: "lD", type: "output", label: "PRINT leap year", print: [], text: v => `${v.year} is a leap year`,
+        explain: v => `${v.year} is divisible by 400, so it is a leap year (Rule 3).`,
+        line: 5, row: 5, say: "Print \"leap year\"" },
+      { id: "end", type: "end", label: "END", row: 6 }
+    ]
+  },
+  {
+    id: "calculator",
+    title: "Simple calculator",
+    task: "Ask the user to enter two numbers and an operator (+, -, *, /). Use conditionals to perform the correct operation and print the result. Handle division by zero with an appropriate message.",
+    define: {
+      Problem: "Apply the arithmetic operation the user chooses to two numbers.",
+      Inputs: "num1 and num2 (decimal numbers, float) and op, the operator (text, str).",
+      Output: "The result, or an error message for division by zero or an unknown operator.",
+      Method: "Compare op with each operator in an if / elif chain. Check \"/ with num2 == 0\" before the normal division, so the division never runs with 0."
+    },
+    vars: [{ name: "num1", kind: "float" }, { name: "num2", kind: "float" }, { name: "op", kind: "str" }],
+    inputs: { num1: 12, num2: 4, op: "/" },
+    python: [
+      'num1 = float(input("Enter the first number: "))',
+      'num2 = float(input("Enter the second number: "))',
+      'op = input("Enter an operator (+, -, *, /): ")',
+      "",
+      'if op == "+":',
+      '    print("Result:", num1 + num2)',
+      'elif op == "-":',
+      '    print("Result:", num1 - num2)',
+      'elif op == "*":',
+      '    print("Result:", num1 * num2)',
+      'elif op == "/" and num2 == 0:',
+      '    print("Error: division by zero is not allowed.")',
+      'elif op == "/":',
+      '    print("Result:", num1 / num2)',
+      "else:",
+      '    print("Invalid operator. Please use +, -, * or /.")'
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT num1, num2, op", read: ["num1", "num2", "op"],
+        prompts: { num1: "Enter the first number: ", num2: "Enter the second number: ", op: "Enter an operator (+, -, *, /): " },
+        line: [0, 1, 2], row: 1 },
+      { id: "dAdd", type: "decision", label: 'op == "+"', labels: ["True", "False"], test: v => v.op === "+",
+        explain: v => `'${v.op}' == '+'`, yes: "pAdd", no: "dSub", line: 4, row: 2,
+        say: "Is op \"+\"? Then print num1 + num2 and go to step 14." },
+      { id: "pAdd", type: "output", label: "PRINT num1 + num2", print: [], text: v => `Result: ${fmt(v.num1 + v.num2, "float")}`,
+        explain: v => `${fmt(v.num1, "float")} + ${fmt(v.num2, "float")} = ${fmt(v.num1 + v.num2, "float")} is printed.`,
+        line: 5, row: 2, col: 1, next: "end", say: "Print num1 + num2, then go to step 14" },
+      { id: "dSub", type: "decision", label: 'op == "-"', labels: ["True", "False"], test: v => v.op === "-",
+        explain: v => `'${v.op}' == '-'`, yes: "pSub", no: "dMul", line: 6, row: 3,
+        say: "Otherwise, is op \"-\"? Then print num1 - num2." },
+      { id: "pSub", type: "output", label: "PRINT num1 - num2", print: [], text: v => `Result: ${fmt(v.num1 - v.num2, "float")}`,
+        explain: v => `${fmt(v.num1, "float")} - ${fmt(v.num2, "float")} = ${fmt(v.num1 - v.num2, "float")} is printed.`,
+        line: 7, row: 3, col: 1, next: "end", say: "Print num1 - num2, then go to step 14" },
+      { id: "dMul", type: "decision", label: 'op == "*"', labels: ["True", "False"], test: v => v.op === "*",
+        explain: v => `'${v.op}' == '*'`, yes: "pMul", no: "dZero", line: 8, row: 4,
+        say: "Otherwise, is op \"*\"? Then print num1 * num2." },
+      { id: "pMul", type: "output", label: "PRINT num1 * num2", print: [], text: v => `Result: ${fmt(v.num1 * v.num2, "float")}`,
+        explain: v => `${fmt(v.num1, "float")} * ${fmt(v.num2, "float")} = ${fmt(v.num1 * v.num2, "float")} is printed.`,
+        line: 9, row: 4, col: 1, next: "end", say: "Print num1 * num2, then go to step 14" },
+      { id: "dZero", type: "decision", label: 'op == "/" and num2 == 0', labels: ["True", "False"],
+        test: v => v.op === "/" && v.num2 === 0,
+        explain: v => `'${v.op}' == '/' and ${fmt(v.num2, "float")} == 0`,
+        note: (yes, v) => v.op === "/" && !yes ? "The operator is /, but num2 is not 0, so dividing is safe." : "",
+        yes: "pZero", no: "dDiv", line: 10, row: 5,
+        say: "Otherwise, is op \"/\" and num2 equal to 0? Then print an error message." },
+      { id: "pZero", type: "output", label: "PRINT error message", print: [],
+        text: () => "Error: division by zero is not allowed.",
+        explain: () => "Dividing by 0 is not possible, so an error message is printed instead of a result. The program does not crash.",
+        line: 11, row: 5, col: 1, next: "end", say: "Print the division-by-zero message, then go to step 14" },
+      { id: "dDiv", type: "decision", label: 'op == "/"', labels: ["True", "False"], test: v => v.op === "/",
+        explain: v => `'${v.op}' == '/'`, yes: "pDiv", no: "pBad", line: 12, row: 6,
+        say: "Otherwise, is op \"/\"? Then print num1 / num2." },
+      { id: "pDiv", type: "output", label: "PRINT num1 / num2", print: [], text: v => `Result: ${fmt(v.num1 / v.num2, "float")}`,
+        explain: v => `${fmt(v.num1, "float")} / ${fmt(v.num2, "float")} = ${fmt(v.num1 / v.num2, "float")} is printed.`,
+        line: 13, row: 6, col: 1, next: "end", say: "Print num1 / num2, then go to step 14" },
+      { id: "pBad", type: "output", label: "PRINT invalid operator", print: [],
+        text: () => "Invalid operator. Please use +, -, * or /.",
+        explain: v => `'${v.op}' matches none of the four operators, so the else block prints a message.`,
+        line: [14, 15], row: 7, say: "Otherwise (else): print \"invalid operator\"" },
+      { id: "end", type: "end", label: "END", row: 8 }
+    ]
+  },
+  {
+    id: "password",
+    title: "Password strength checker",
+    task: "Validate password security and give a strength rating. Criteria: (1) minimum 8 characters, (2) at least one special character (!@#$%^&*), (3) no common words (password, 12345, qwerty). Rating: 0 criteria Weak, 1 Medium, 2 Strong, 3 Very Strong. Show ✓ or ✗ for each criterion, the strength level, a percentage score and improvement suggestions.",
+    tall: true,
+    define: {
+      Problem: "Rate how secure a password is by counting how many of the 3 criteria it meets.",
+      Inputs: "password: the text to check (str).",
+      Output: "✓ / ✗ per criterion, the score, the strength level, the percentage and suggestions.",
+      Method: "Start score at 0 and add 1 for each criterion met, remembering each result in a True/False variable. Then turn the score into a strength level and a percentage (score × 100 / 3), and use the True/False variables to choose the suggestions."
+    },
+    vars: [{ name: "password", kind: "str" }, { name: "score", kind: "int" },
+           { name: "has_min_length", kind: "bool" }, { name: "has_special", kind: "bool" },
+           { name: "no_common_words", kind: "bool" }, { name: "strength", kind: "str" },
+           { name: "percentage", kind: "float" }],
+    inputs: { password: "qwerty!" },
+    python: [
+      "#!/usr/bin/env python3",
+      "# Password Strength Validator",
+      "",
+      "# Ask user for password",
+      "password = input(\"Enter a password to check: \")",
+      "",
+      "print()",
+      "print(\"=\" * 50)",
+      "print(\"PASSWORD STRENGTH ANALYSIS\")",
+      "print(\"=\" * 50)",
+      "print()",
+      "",
+      "# Criterion counter",
+      "score = 0",
+      "",
+      "# 1. Minimum 8 characters",
+      "#has_min_length = len(password) >= 8",
+      "has_min_length = False",
+      "if len(password) >= 8:",
+      "    print(\"✓ Minimum 8 characters\")",
+      "    score = score + 1",
+      "    has_min_length = True",
+      "else:",
+      "    print(\"✗ Minimum 8 characters\")",
+      "",
+      "# 2. At least one special character",
+      "#special_chars = \"!@#$%^&*\"",
+      "has_special = False",
+      "if \"!\" in password:",
+      "    has_special = True",
+      "elif \"@\" in password:",
+      "    has_special = True",
+      "elif \"#\" in password:",
+      "    has_special = True",
+      "elif \"$\" in password:",
+      "    has_special = True",
+      "elif \"%\" in password:",
+      "    has_special = True",
+      "elif \"^\" in password:",
+      "    has_special = True",
+      "elif \"&\" in password:",
+      "    has_special = True",
+      "elif \"*\" in password:",
+      "    has_special = True",
+      "",
+      "if has_special:",
+      "    print(\"✓ At least one special character (!@#$%^&*)\")",
+      "    score = score + 1",
+      "else:",
+      "    print(\"✗ At least one special character (!@#$%^&*)\")",
+      "",
+      "# 3. No common words",
+      "#common_words = [\"password\", \"12345\", \"qwerty\"]",
+      "password_lower = password.lower()",
+      "no_common_words = True",
+      "",
+      "if \"password\" in password_lower:",
+      "    no_common_words = False",
+      "elif \"12345\" in password_lower:",
+      "    no_common_words = False",
+      "elif \"qwerty\" in password_lower:",
+      "    no_common_words = False",
+      "",
+      "if no_common_words:",
+      "    print(\"✓ No common words (password, 12345, qwerty)\")",
+      "    score = score + 1",
+      "else:",
+      "    print(\"✗ No common words (password, 12345, qwerty)\")",
+      "",
+      "print()",
+      "print(\"-\" * 50)",
+      "",
+      "# Determine strength level",
+      "if score < 1:",
+      "    strength = \"Weak\"",
+      "elif score < 2:",
+      "    strength = \"Medium\"",
+      "elif score <3:",
+      "    strength = \"Strong\"",
+      "else:",
+      "    strength = \"Very Strong\"",
+      "",
+      "# Calculate percentage",
+      "percentage = (score * 100) / 3",
+      "",
+      "# Display results",
+      "print(\"Score: %d/3 criteria met\" % score)",
+      "print(\"Strength: %s\" % strength)",
+      "print(\"Percentage: %.0f%%\" % percentage)",
+      "print()",
+      "",
+      "# Improvement suggestions",
+      "print(\"SUGGESTIONS FOR IMPROVEMENT:\")",
+      "if not has_min_length:",
+      "    print(\"  - Minimum length 8 characters\")",
+      "if not has_special:",
+      "    print(\"  - Add at least one special character (!@#$%^&*)\")",
+      "if not no_common_words:",
+      "    print(\"  - Avoid common words like 'password', '12345', 'qwerty'\")",
+      "",
+      "if score == 3:",
+      "    print(\"  - Your password is very strong! No improvements needed.\")",
+      "",
+      "print(\"=\" * 50)"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "input", label: "INPUT password", read: ["password"],
+        prompts: { password: "Enter a password to check: " }, line: 4, row: 1 },
+      { id: "init", type: "process", label: "PRINT header, score = 0",
+        sets: () => ({ score: 0, has_min_length: false, has_special: false, no_common_words: true }),
+        text: () => "\n" + "=".repeat(50) + "\nPASSWORD STRENGTH ANALYSIS\n" + "=".repeat(50) + "\n",
+        explain: () => "the header is printed and the counter score starts at 0. The three True/False variables get their starting values.",
+        line: [6, 7, 8, 9, 10, 13, 17, 27, 54], row: 2, say: "Print the header and set score = 0" },
+
+      { id: "d1", type: "decision", label: "len(password) >= 8", labels: ["True", "False"],
+        test: v => [...v.password].length >= 8,
+        explain: v => `len('${v.password}') >= 8`,
+        note: (yes, v) => `(the password has ${[...v.password].length} characters)`,
+        yes: "ok1", no: "no1", line: 18, row: 3,
+        say: "Criterion 1: is the password at least 8 characters long?" },
+      { id: "ok1", type: "process", label: "PRINT ✓, score + 1", row: 3, col: 1, next: "d2",
+        sets: v => ({ score: v.score + 1, has_min_length: true }),
+        text: () => "✓ Minimum 8 characters",
+        explain: v => `criterion 1 is met: ✓ is printed, score becomes ${v.score} and has_min_length becomes True.`,
+        line: [19, 20, 21], say: "Yes: print ✓ and add 1 to score" },
+      { id: "no1", type: "output", label: "PRINT ✗", print: [], row: 4,
+        text: () => "✗ Minimum 8 characters",
+        explain: v => `criterion 1 is not met: ✗ is printed and score stays ${v.score}.`,
+        line: [22, 23], say: "No: print ✗" },
+
+      { id: "d2", type: "decision", label: "has special char", labels: ["True", "False"],
+        test: v => [..."!@#$%^&*"].some(c => v.password.includes(c)),
+        explain: v => `'${v.password}' contains one of !@#$%^&*`,
+        note: (yes, v) => yes
+          ? `(the elif chain finds '${[..."!@#$%^&*"].find(c => v.password.includes(c))}' and stops looking)`
+          : "(the elif chain checks all 8 characters and finds none)",
+        yes: "ok2", no: "no2", line: [28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 45], row: 5,
+        say: "Criterion 2: does the password contain a special character (!@#$%^&*)?" },
+      { id: "ok2", type: "process", label: "PRINT ✓, score + 1", row: 5, col: 1, next: "d3",
+        sets: v => ({ score: v.score + 1, has_special: true }),
+        text: () => "✓ At least one special character (!@#$%^&*)",
+        explain: v => `criterion 2 is met: ✓ is printed, score becomes ${v.score} and has_special becomes True.`,
+        line: [46, 47], say: "Yes: print ✓ and add 1 to score" },
+      { id: "no2", type: "output", label: "PRINT ✗", print: [], row: 6,
+        text: () => "✗ At least one special character (!@#$%^&*)",
+        explain: v => `criterion 2 is not met: ✗ is printed and score stays ${v.score}.`,
+        line: [48, 49], say: "No: print ✗" },
+
+      { id: "d3", type: "decision", label: "no common word", labels: ["True", "False"],
+        test: v => !["password", "12345", "qwerty"].some(w => v.password.toLowerCase().includes(w)),
+        explain: v => `'${v.password}' contains none of password, 12345, qwerty`,
+        note: (yes, v) => yes
+          ? "(checked in lower case, so 'Password' would also count)"
+          : `('${["password", "12345", "qwerty"].find(w => v.password.toLowerCase().includes(w))}' was found)`,
+        yes: "ok3", no: "no3", line: [53, 56, 57, 58, 59, 60, 61, 63], row: 7,
+        say: "Criterion 3: is the password free of common words (password, 12345, qwerty)?" },
+      { id: "ok3", type: "process", label: "PRINT ✓, score + 1", row: 7, col: 1, next: "strength",
+        sets: v => ({ score: v.score + 1 }),
+        text: () => "✓ No common words (password, 12345, qwerty)",
+        explain: v => `criterion 3 is met: ✓ is printed and score becomes ${v.score}.`,
+        line: [64, 65], say: "Yes: print ✓ and add 1 to score" },
+      { id: "no3", type: "output", label: "PRINT ✗", print: [], row: 8,
+        sets: () => ({ no_common_words: false }),
+        text: () => "✗ No common words (password, 12345, qwerty)",
+        explain: v => `criterion 3 is not met: ✗ is printed, no_common_words is False and score stays ${v.score}.`,
+        line: [57, 59, 61, 66, 67], say: "No: print ✗" },
+
+      { id: "strength", type: "process", label: "strength from score", row: 9,
+        sets: v => ({ strength: ["Weak", "Medium", "Strong", "Very Strong"][v.score] }),
+        explain: v => `score is ${v.score}, so the if / elif chain sets strength = '${v.strength}' (0 Weak, 1 Medium, 2 Strong, 3 Very Strong).`,
+        line: [73, 74, 75, 76, 77, 78, 79, 80], say: "Choose the strength level from the score (if / elif chain)" },
+      { id: "pct", type: "process", label: "percentage = score * 100 / 3", set: "percentage", row: 10,
+        calc: v => (v.score * 100) / 3,
+        explain: v => `${v.score} * 100 / 3 = ${fmt((v.score * 100) / 3, "float")}`, line: 83 },
+      { id: "results", type: "output", label: "PRINT score, strength, %", print: ["score", "strength", "percentage"], row: 11,
+        text: v => `\n${"-".repeat(50)}\nScore: ${v.score}/3 criteria met\nStrength: ${v.strength}\nPercentage: ${v.percentage.toFixed(0)}%\n`,
+        explain: v => `the results are printed. %.0f rounds ${fmt(v.percentage, "float")} to ${v.percentage.toFixed(0)}, and %% prints a single % sign.`,
+        line: [69, 70, 86, 87, 88, 89], say: "Print the score, the strength and the percentage" },
+      { id: "sugg", type: "output", label: "PRINT suggestions", print: [], row: 12,
+        text: v => ["SUGGESTIONS FOR IMPROVEMENT:",
+          ...(!v.has_min_length ? ["  - Minimum length 8 characters"] : []),
+          ...(!v.has_special ? ["  - Add at least one special character (!@#$%^&*)"] : []),
+          ...(!v.no_common_words ? ["  - Avoid common words like 'password', '12345', 'qwerty'"] : []),
+          ...(v.score === 3 ? ["  - Your password is very strong! No improvements needed."] : []),
+          "=".repeat(50)].join("\n"),
+        explain: v => v.score === 3
+          ? "all criteria are met, so only the 'very strong' message is printed."
+          : `one suggestion is printed for each True/False variable that is False (${3 - v.score} of them). Each check is a separate if, not elif, so several suggestions can appear.`,
+        line: [92, 93, 94, 95, 96, 97, 98, 100, 101, 103], say: "Print a suggestion for each criterion that is not met" },
+      { id: "end", type: "end", label: "END", row: 13 }
+    ]
+  },
+  {
+    id: "count",
+    title: "Print 1 to 20 (while loop)",
+    task: "Print all numbers from 1 up to 20.",
+    define: {
+      Problem: "Print the whole numbers 1, 2, 3, … 20, one per line.",
+      Inputs: "None. The start (1) and the end (20) are fixed in the program.",
+      Output: "The numbers 1 to 20.",
+      Method: "Use a counter i. Start at 1; while i <= 20, print i and add 1 to it. When i reaches 21 the condition is False and the loop stops."
+    },
+    vars: [{ name: "i", kind: "int" }],
+    inputs: {},
+    python: [
+      "i = 1",
+      "while i <= 20:",
+      "    print(i)",
+      "    i = i + 1",
+      "",
+      "# The same loop written with for:",
+      "# for i in range(1, 21):",
+      "#     print(i)"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { id: "init", type: "process", label: "i = 1", sets: () => ({ i: 1 }),
+        explain: () => "the counter i starts at 1.", line: 0, say: "Set the counter i = 1" },
+      { id: "test", type: "decision", label: "i <= 20", labels: ["True", "False"], test: v => v.i <= 20,
+        explain: v => `${v.i} <= 20`,
+        note: yes => yes ? "The loop body runs." : "The loop stops and the program continues after it.",
+        yes: "show", no: "end", line: 1,
+        say: "Is i <= 20? If yes, go to step 4. If no, go to step 6." },
+      { id: "show", type: "output", label: "PRINT i", print: ["i"],
+        explain: v => `${v.i} is printed (pass ${v.i} of 20 through the loop).`, line: 2, say: "Print i" },
+      { id: "inc", type: "process", label: "i = i + 1", set: "i", calc: v => v.i + 1,
+        explain: v => `${v.i - 1} + 1 = ${v.i}`, line: 3, next: "test",
+        say: "Add 1 to i, then go back to step 3" },
+      { id: "end", type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "countfor",
+    title: "Print 1 to 20 (for loop)",
+    task: "Print all numbers from 1 up to 20, this time with a for loop over range(1, 21).",
+    define: {
+      Problem: "Print the whole numbers 1, 2, 3, … 20, one per line.",
+      Inputs: "None. The numbers come from range(1, 21).",
+      Output: "The numbers 1 to 20.",
+      Method: "range(1, 21) produces 1 to 20 (the end value 21 is not included). The for loop gives i each of these values in turn, so there is no counter to set up or increase."
+    },
+    vars: [{ name: "i", kind: "int" }],
+    inputs: {},
+    python: [
+      "for i in range(1, 21):",
+      "    print(i)",
+      "",
+      "# range(1, 21) gives 1, 2, ..., 20 (21 is not included).",
+      "# for takes the next number each time, so no i = i + 1 is needed."
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { id: "more", type: "decision", label: "next in range(1, 21)?", labels: ["True", "False"],
+        test: v => (v.i ?? 0) < 20,
+        explain: () => "there is a next number in range(1, 21)",
+        note: (yes, v) => yes ? `(the next number is ${(v.i ?? 0) + 1})` : "(all 20 numbers have been used, so the loop ends)",
+        yes: "take", no: "end", line: 0,
+        say: "Is there a next number in range(1, 21)? If yes, go to step 3. If no, go to step 5." },
+      { id: "take", type: "process", label: "i = next number", sets: v => ({ i: (v.i ?? 0) + 1 }),
+        explain: v => `the for loop gives i the next value from the range: i = ${v.i}.`, line: 0,
+        say: "i takes the next number from the range" },
+      { id: "show", type: "output", label: "PRINT i", print: ["i"], next: "more",
+        explain: v => `${v.i} is printed (pass ${v.i} of 20 through the loop).`, line: 1,
+        say: "Print i, then go back to step 2" },
+      { id: "end", type: "end", label: "END" }
+    ]
+  },
+  {
+    id: "countchar",
+    title: "Count a character in a text",
+    task: "Count how many times the character 'l' appears in \"Hello World\".",
+    tall: true,
+    define: {
+      Problem: "Find how often one character occurs in a text.",
+      Inputs: "text (str) and char_to_find (str), both written in the program.",
+      Output: "A message with the character and how many times it appears.",
+      Method: "Start count at 0. A for loop visits every character of text; each time the character equals char_to_find, add 1 to count. Print count after the loop."
+    },
+    vars: [{ name: "text", kind: "str" }, { name: "char_to_find", kind: "str" },
+           { name: "count", kind: "int" }, { name: "char", kind: "str" }],
+    inputs: { text: "Hello World", char_to_find: "l" },
+    python: [
+      'text = "Hello World"',
+      "char_to_find = 'l'",
+      "count = 0",
+      "",
+      "for char in text:",
+      "    if char == char_to_find:",
+      "        count = count + 1",
+      "",
+      "print(f\"The character '{char_to_find}' appears {count} times\")"
+    ],
+    steps: [
+      { type: "start", label: "START" },
+      { type: "assign", label: 'text = "Hello World"', read: ["text"], line: 0 },
+      { type: "assign", label: "char_to_find = 'l'", read: ["char_to_find"], line: 1 },
+      { id: "zero", type: "process", label: "count = 0", sets: () => ({ count: 0, _k: 0 }),
+        explain: () => "the counter count starts at 0.", line: 2, say: "Set count = 0" },
+      { id: "more", type: "decision", label: "next char in text?", labels: ["True", "False"],
+        test: v => v._k < [...v.text].length,
+        explain: () => "there is a next character in text",
+        note: (yes, v) => { const cs = [...v.text];
+          return yes ? `(character ${v._k + 1} of ${cs.length}: '${cs[v._k]}')`
+                     : `(all ${cs.length} characters have been checked, so the loop ends)`; },
+        yes: "take", no: "show", line: 4,
+        say: "Is there a next character in text? If yes, go to step 6. If no, go to step 9." },
+      { id: "take", type: "process", label: "char = next character", line: 4,
+        sets: v => ({ char: [...v.text][v._k], _k: v._k + 1 }),
+        explain: v => `the for loop gives char the next character of text: char = '${v.char}'.`,
+        say: "char takes the next character of text" },
+      { id: "match", type: "decision", label: "char == char_to_find", labels: ["True", "False"],
+        test: v => v.char === v.char_to_find,
+        explain: v => `'${v.char}' == '${v.char_to_find}'`,
+        note: yes => yes ? "It is a match, so count goes up by 1." : "No match: count stays the same and the loop goes on to the next character.",
+        yes: "inc", no: "more", line: 5,
+        say: "Is char equal to char_to_find? If yes, go to step 8. If no, go back to step 5." },
+      { id: "inc", type: "process", label: "count = count + 1", set: "count", calc: v => v.count + 1,
+        explain: v => `${v.count - 1} + 1 = ${v.count}`, line: 6, next: "more",
+        say: "Add 1 to count, then go back to step 5" },
+      { id: "show", type: "output", label: "PRINT message", print: ["char_to_find", "count"],
+        text: v => `The character '${v.char_to_find}' appears ${v.count} times`,
+        explain: v => `the f-string puts char_to_find ('${v.char_to_find}') and count (${v.count}) into the message.`,
+        line: 8, say: "Print the message with char_to_find and count" },
+      { id: "end", type: "end", label: "END" }
+    ]
+  }
+];
+/* ===================================================================== */
+
+const NS = "http://www.w3.org/2000/svg";
+const H = 54, HD = 84, RGAP = 46, Y0 = 24, VBW = 480;
+const $ = id => document.getElementById(id);
+const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+// "A", "A and B", "A, B and C"
+function andList(a) { return a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
+
+// Wording for the "Algorithm in steps" list.
+function sayOf(s) {
+  if (s.say) return s.say;
+  if (s.type === "start") return "Start";
+  if (s.type === "end") return "End";
+  if (s.type === "input") return "Read " + andList(s.read);
+  if (s.type === "output") return "Print " + andList(s.print);
+  if (s.type === "decision") return "Check: " + s.label;
+  return s.label.replace(/ x /g, " × ");
+}
+
+// Print numbers the way Python would: floats always show a decimal part.
+function fmt(x, kind) {
+  if (kind === "str") return "'" + x + "'";
+  if (kind === "bool" || typeof x === "boolean") return x ? "True" : "False";
+  if (Number.isNaN(x)) return "not a real number";
+  if (kind === "float" && Number.isInteger(x)) return x.toFixed(1);
+  return String(x);
+}
+
+let algo = null, kinds = {}, step = 0, timer = null, nodeEls = [], edgeEls = {}, idIndex = {};
+
+// Menu + dropdown
+ALGORITHMS.forEach((a, i) => {
+  const link = document.createElement("a");
+  link.href = "#" + a.id; link.dataset.id = a.id;
+  link.innerHTML = `<span class="n">${i + 1}</span><span>${esc(a.title)}</span>`;
+  $("menu").append(link);
+  const o = document.createElement("option"); o.value = a.id; o.textContent = `${i + 1}. ${a.title}`; $("pick").append(o);
+});
+$("menu").addEventListener("click", e => { const a = e.target.closest("a"); if (!a) return; e.preventDefault(); load(a.dataset.id); });
+$("pick").addEventListener("change", e => load(e.target.value));
+
+function load(id) {
+  stopPlay();
+  algo = ALGORITHMS.find(a => a.id === id) || ALGORITHMS[0];
+  kinds = Object.fromEntries(algo.vars.map(v => [v.name, v.kind]));
+  idIndex = {};
+  algo.steps.forEach((s, i) => { idIndex[s.id ?? String(i)] = i; });
+  step = 0;
+  const idx = ALGORITHMS.indexOf(algo);
+  try { history.replaceState(null, "", "#" + algo.id); } catch (e) {}
+  document.querySelectorAll("nav.menu a").forEach(a => a.setAttribute("aria-current", a.dataset.id === algo.id));
+  $("pick").value = algo.id;
+  $("eyebrow").textContent = `Example ${idx + 1} of ${ALGORITHMS.length}`;
+  $("title").textContent = algo.title;
+  $("task").textContent = algo.task;
+
+  $("inputs").innerHTML = "";
+  Object.entries(algo.inputs).forEach(([name, val]) => {
+    const lab = document.createElement("label");
+    lab.htmlFor = "in-" + name;
+    lab.innerHTML = kinds[name] === "str"
+      ? `${esc(name)} <input id="in-${esc(name)}" type="text" class="txt" spellcheck="false" value="${esc(val).replace(/"/g, "&quot;")}">`
+      : kinds[name] === "bool"
+      ? `${esc(name)} <span class="tf"><input id="in-${esc(name)}" type="checkbox"${val ? " checked" : ""}><span class="tfv"></span></span>`
+      : `${esc(name)} <input id="in-${esc(name)}" type="number" step="any" value="${val}">`;
+    lab.querySelector("input").addEventListener("input", () => { step = Math.min(step, path().length); render(); });
+    $("inputs").append(lab);
+  });
+
+  $("vars").innerHTML = algo.vars.map(v => `<tr data-v="${esc(v.name)}"><td>${esc(v.name)}</td><td class="val"></td></tr>`).join("");
+  $("code").innerHTML = algo.python.map((l, i) => `<span><span class="ln">${i + 1}</span>${esc(l)}</span>`).join("");
+  $("algsteps").innerHTML = algo.steps.map(s => `<li>${esc(sayOf(s))}</li>`).join("");
+  $("defcard").hidden = !algo.define;
+  $("define").innerHTML = algo.define
+    ? Object.entries(algo.define).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("") : "";
+
+  $("tvhead").textContent = Object.keys(algo.inputs).length ? "Test values" : "Controls";
+  $("toend").disabled = false;
+  $("svg").style.maxHeight = algo.tall ? "none" : "";   // tall charts scroll with the page instead of shrinking
+  $("code").scrollTop = 0;
+  drawChart();
+  render();
+}
+
+// Where each step goes next (decisions have two exits).
+function exits(i) {
+  const s = algo.steps[i];
+  if (s.type === "end") return [];
+  if (s.type === "decision") {
+    const L = s.labels || ["YES", "NO"];
+    return [{ to: idIndex[s.yes], label: L[0] }, { to: idIndex[s.no], label: L[1] }];
+  }
+  if (s.next !== undefined) return [{ to: idIndex[s.next] }];
+  return i + 1 < algo.steps.length ? [{ to: i + 1 }] : [];
+}
+
+function drawChart() {
+  const svg = $("svg"), gN = $("nodes"), gE = $("edges");
+  gN.innerHTML = ""; gE.innerHTML = ""; nodeEls = []; edgeEls = {};
+  const branched = algo.steps.some(s => (s.col || 0) > 0);
+  const colX = branched ? [180, 395] : [220];
+
+  // Geometry
+  let r = -1;
+  const geo = algo.steps.map(s => {
+    r = s.row !== undefined ? s.row : r + 1;
+    const col = s.col || 0, h = s.type === "decision" ? HD : H;
+    const w = s.type === "decision" ? Math.max(180, s.label.length * 12 + 80)
+            : Math.max(160, s.label.length * 11.5 + 56);
+    return { row: r, col, cx: colX[col], w, h };
+  });
+  // Two-column charts: leave room for the tags on the left and the branch labels in between.
+  let railX = 0;
+  if (branched) {
+    const c0 = geo.filter(g => g.col === 0), c1 = geo.filter(g => g.col > 0);
+    const cx0 = Math.max(colX[0], Math.max(...c0.map(g => g.w)) / 2 + 92);
+    c0.forEach(g => { g.cx = cx0; });
+    const rows1 = new Set(c1.map(g => g.row));
+    const right0 = Math.max(0, ...c0.filter(g => rows1.has(g.row)).map(g => g.cx + g.w / 2));
+    const cx1 = Math.max(colX[1], right0 + 56 + Math.max(...c1.map(g => g.w)) / 2);
+    c1.forEach(g => { g.cx = cx1; });
+    railX = Math.max(...c1.map(g => g.cx + g.w / 2)) + 22;
+  }
+  // Widen the drawing when a long label would not fit (single-column charts).
+  if (!branched) {
+    const half = Math.max(...geo.map(g => g.w)) / 2 + 28;
+    if (half > colX[0]) geo.forEach(g => { g.cx = half; });
+  }
+  // Loops: arrows that go back up run along a rail on the left; arrows that skip
+  // past boxes in the same column (e.g. leaving a loop) run along a rail on the right.
+  const backEdge = (i, to) => geo[to].row < geo[i].row;
+  const skipEdge = (i, to) => { const a = geo[i], b = geo[to];
+    return b.cx === a.cx && b.row > a.row + 1 && geo.some(g => g !== a && g !== b && g.cx === a.cx && g.row > a.row && g.row < b.row); };
+  const allEdges = algo.steps.flatMap((s, i) => exits(i).map(e => [i, e.to]));
+  const leftRail = Math.min(...geo.map(g => g.cx - g.w / 2)) - 30;
+  if (allEdges.some(([i, to]) => backEdge(i, to)) && leftRail < 14) geo.forEach(g => { g.cx += 14 - leftRail; });
+  const lRail = Math.min(...geo.map(g => g.cx - g.w / 2)) - 30;
+  const rRail = Math.max(...geo.filter(g => g.col === 0).map(g => g.cx + g.w / 2)) + (branched ? 30 : 112);
+  const skipFrom = new Set(allEdges.filter(([i, to]) => skipEdge(i, to)).map(([i]) => i));
+  const vbw = Math.max(VBW, ...geo.map(g => g.cx + g.w / 2 + (branched ? 34 : 100)), skipFrom.size ? rRail + 16 : 0);
+  const nRows = Math.max(...geo.map(g => g.row)) + 1;
+  const rowH = Array(nRows).fill(H);
+  geo.forEach(g => { rowH[g.row] = Math.max(rowH[g.row], g.h); });
+  const rowTop = []; let y = Y0;
+  rowH.forEach((h, i) => { rowTop[i] = y; y += h + RGAP; });
+  geo.forEach(g => { g.top = rowTop[g.row] + (rowH[g.row] - g.h) / 2; g.bot = g.top + g.h; g.cy = g.top + g.h / 2; });
+  svg.setAttribute("viewBox", `0 0 ${vbw} ${y - RGAP + Y0}`);
+  svg.setAttribute("aria-label", "Flowchart: " + algo.steps.map(s => s.label).join(", "));
+
+  // Shapes
+  const tagOf = { start: "terminal", end: "terminal", input: "input", output: "output", process: "process", assign: "process", decision: "decision" };
+  algo.steps.forEach((s, i) => {
+    const g0 = geo[i], { cx, w, h, top } = g0, x = cx - w / 2, g = el("g", { class: "node" });
+    let sh;
+    if (s.type === "start" || s.type === "end") sh = el("rect", { x, y: top, width: w, height: h, rx: h / 2 });
+    else if (s.type === "process" || s.type === "assign") sh = el("rect", { x, y: top, width: w, height: h, rx: 3 });
+    else if (s.type === "decision") sh = el("polygon", { points: `${cx},${top} ${cx + w / 2},${top + h / 2} ${cx},${top + h} ${x},${top + h / 2}` });
+    else { const k = 18; sh = el("polygon", { points: `${x + k},${top} ${x + w + k},${top} ${x + w - k},${top + h} ${x - k},${top + h}` }); }
+    sh.setAttribute("class", "sh");
+    const t = el("text", { x: cx, y: g0.cy }); t.textContent = s.label;
+    g.append(sh, t);
+    if (!branched || g0.col === 0) {
+      const tag = branched
+        ? el("text", { x: cx - w / 2 - 22, y: g0.cy, class: "tag tag-l" })
+        : el("text", { x: cx + w / 2 + 26, y: skipFrom.has(i) ? g0.cy - 14 : g0.cy, class: "tag tag-r" });
+      tag.textContent = tagOf[s.type].toUpperCase();
+      g.append(tag);
+    }
+    gN.append(g); nodeEls.push(g);
+  });
+
+  // Arrows
+  algo.steps.forEach((s, i) => {
+    exits(i).forEach(({ to, label }) => {
+      const a = geo[i], b = geo[to];
+      let d, lx, ly, anchor = "start";
+      if (b.row === a.row && b.col > a.col) {           // sideways branch
+        const x1 = a.cx + a.w / 2, x2 = b.cx - b.w / 2 - 3;
+        d = `M${x1},${a.cy} H${x2}`; lx = (x1 + x2) / 2; ly = a.cy - 10; anchor = "middle";
+      } else if (backEdge(i, to)) {                     // loop back: left, up the left rail, into the top
+        d = `M${a.cx - a.w / 2},${a.cy} H${lRail} V${b.top - 18} H${b.cx} V${b.top - 3}`;
+        lx = lRail + 6; ly = a.cy - 8;
+      } else if (skipEdge(i, to)) {                     // leave sideways, down the right rail, past the boxes below
+        d = `M${a.cx + a.w / 2},${a.cy} H${rRail} V${b.top - 18} H${b.cx} V${b.top - 3}`;
+        lx = a.cx + a.w / 2 + 10; ly = a.cy + 20;
+      } else if (b.cx === a.cx) {                       // straight down
+        d = `M${a.cx},${a.bot} V${b.top - 3}`; lx = a.cx + 10; ly = a.bot + 18;
+      } else if (a.col > b.col && geo.some(g => g !== a && g.col === a.col && g.row > a.row && g.row < b.row)) {
+        // right, down a rail past the other branch boxes, then back to the main line
+        const yj = b.top - 20;
+        d = `M${a.cx + a.w / 2},${a.cy} H${railX} V${yj} H${b.cx} V${b.top - 3}`;
+      } else {                                          // down, across, down (joins the main line)
+        const yj = b.top - 20;
+        d = `M${a.cx},${a.bot} V${yj} H${b.cx} V${b.top - 3}`; lx = a.cx + 10; ly = a.bot + 18;
+      }
+      const p = el("path", { d, class: "edge", "marker-end": "url(#ah)" });
+      gE.append(p);
+      let lt = null;
+      if (label) { lt = el("text", { x: lx, y: ly, class: "elabel", "text-anchor": anchor }); lt.textContent = label; gE.append(lt); }
+      edgeEls[`${i}>${to}`] = { p, lt };
+    });
+  });
+}
+
+function readInputs() {
+  const v = {};
+  Object.keys(algo.inputs).forEach(name => {
+    const raw = $("in-" + name).value, x = Number(raw);
+    if (kinds[name] === "str") { v[name] = raw; return; }
+    if (kinds[name] === "bool") { v[name] = $("in-" + name).checked; return; }
+    v[name] = raw === "" || !Number.isFinite(x) ? 0 : (kinds[name] === "int" ? Math.trunc(x) : x);
+  });
+  return v;
+}
+
+// Run the whole algorithm once to find the route taken for the current inputs.
+function path() {
+  const given = readInputs(), mem = algo.preset ? { ...given } : {}, p = [];
+  let i = 0;
+  while (i !== undefined && p.length < 200) {
+    const s = algo.steps[i]; p.push(i);
+    if (s.type === "input" || s.type === "assign") s.read.forEach(n => { mem[n] = given[n]; });
+    if (s.sets) Object.assign(mem, s.sets(mem));
+    else if (s.type === "process") mem[s.set] = s.calc(mem);
+    if (s.type === "decision") { i = idIndex[s.test(mem) ? s.yes : s.no]; continue; }
+    const ex = exits(i); i = ex.length ? ex[0].to : undefined;
+  }
+  return p;
+}
+
+// Replay the first `step` shapes on the route: memory, output and the latest message.
+function run(route) {
+  const given = readInputs(), mem = algo.preset ? { ...given } : {}, out = [];
+  let msg = "Press <b>Start</b> to run the algorithm.", changed = [];
+  route.slice(0, step).forEach(i => {
+    const s = algo.steps[i]; changed = [];
+    if (s.type === "start") msg = "<b>START</b>: the program begins.";
+    else if (s.type === "end") { msg = "<b>END</b>: the program stops."; out.push("", "[program finished]"); }
+    else if (s.type === "input") {
+      s.read.forEach(name => { mem[name] = given[name]; changed.push(name); out.push(`${(s.prompts && s.prompts[name]) || "Enter " + name + ": "}${fmt(given[name])}`); });
+      msg = `<b>Input</b>: the user types ${andList(s.read.map(r => fmt(given[r])))}. ${s.read.length > 1 ? "They are" : "It is"} stored in ${andList(s.read)}.`;
+    } else if (s.type === "assign") {
+      s.read.forEach(name => { mem[name] = given[name]; changed.push(name); });
+      msg = `<b>Process</b>: the value ${andList(s.read.map(r => fmt(given[r], kinds[r])))} written in the code is stored in ${andList(s.read)}.`;
+    } else if (s.type === "process" && s.sets) {
+      const upd = s.sets(mem); Object.assign(mem, upd); changed.push(...Object.keys(upd));
+      if (s.text) out.push(s.text(mem));
+      msg = `<b>Process</b>: ${s.explain(mem)}`;
+    } else if (s.type === "process") {
+      mem[s.set] = s.calc(mem); changed.push(s.set);
+      msg = `<b>Process</b>: the computer calculates ${s.explain ? s.explain(mem) : fmt(mem[s.set], kinds[s.set])} and stores it in ${s.set}.`;
+    } else if (s.type === "decision") {
+      const yes = s.test(mem);
+      if (s.labels) {
+        const L = yes ? s.labels[0] : s.labels[1];
+        msg = `<b>Decision</b>: ${s.explain ? s.explain(mem) : s.label} is <b>${L}</b>, so the program follows the ${L} arrow.${s.note ? " " + s.note(yes, mem) : ""}`;
+      } else
+      msg = `<b>Decision</b>: is ${s.explain ? s.explain(mem) : s.label}? ${yes ? "<b>YES</b>" : "<b>NO</b>"}, so the program follows the ${yes ? "YES" : "NO"} arrow.`;
+    } else if (s.type === "output") {
+      if (s.sets) { const upd = s.sets(mem); Object.assign(mem, upd); changed.push(...Object.keys(upd)); }
+      out.push(s.text ? s.text(mem) : s.print.map(p => fmt(mem[p], kinds[p])).join(" "));
+      msg = s.explain ? `<b>Output</b>: ${s.explain(mem)}`
+        : `<b>Output</b>: the value${s.print.length > 1 ? "s" : ""} of ${andList(s.print)} ${s.print.length > 1 ? "are" : "is"} printed on the screen.`;
+    }
+  });
+  return { mem, out, msg, changed };
+}
+
+function render() {
+  const route = path();
+  step = Math.min(step, route.length);
+  const { mem, out, msg, changed } = run(route);
+  const walked = route.slice(0, step), activeIdx = step ? route[step - 1] : -1;
+  nodeEls.forEach((g, i) => {
+    g.classList.toggle("active", i === activeIdx);
+    g.classList.toggle("done", i !== activeIdx && walked.includes(i));
+  });
+  const doneEdges = new Set();
+  for (let k = 0; k + 1 < walked.length; k++) doneEdges.add(`${walked[k]}>${walked[k + 1]}`);
+  Object.entries(edgeEls).forEach(([key, { p, lt }]) => {
+    const d = doneEdges.has(key);
+    p.classList.toggle("done", d); p.setAttribute("marker-end", d ? "url(#ahd)" : "url(#ah)");
+    if (lt) lt.classList.toggle("done", d);
+    if (d) { $("edges").append(p); if (lt) $("edges").append(lt); }   // walked arrows on top where lines share a rail
+  });
+  const ln = activeIdx >= 0 ? algo.steps[activeIdx].line : undefined;
+  const lines = ln === undefined ? [] : [].concat(ln);
+  [...$("code").children].forEach((l, i) => l.classList.toggle("cur", lines.includes(i)));
+  // Long programs: scroll the Python panel so the highlighted line is in view.
+  const pre = $("code"), cur = pre.querySelector(".cur");
+  if (cur && pre.scrollHeight > pre.clientHeight &&
+      (cur.offsetTop < pre.scrollTop || cur.offsetTop > pre.scrollTop + pre.clientHeight - 40)) {
+    pre.scrollTop = Math.max(0, cur.offsetTop - 40);
+  }
+  [...$("algsteps").children].forEach((li, i) => li.classList.toggle("cur", i === activeIdx));
+  [...$("vars").children].forEach(tr => {
+    const name = tr.dataset.v, has = name in mem;
+    tr.querySelector(".val").innerHTML = has ? esc(fmt(mem[name], kinds[name])) : '<span class="empty">—</span>';
+    tr.classList.toggle("flash", changed.includes(name));
+  });
+  $("console").textContent = out.join("\n") || " ";
+  $("status").innerHTML = msg;
+  $("back").disabled = step === 0;
+  $("next").disabled = step === route.length;
+  $("toend").disabled = step === route.length;
+  $("next").textContent = step === 0 ? "Start ▶" : "Next step ▶";
+}
+
+function go(d) { step = Math.max(0, step + d); render(); }
+function atEnd() { return step >= path().length; }
+function stopPlay() { clearInterval(timer); timer = null; $("play").textContent = "Auto-play"; }
+function togglePlay() {
+  if (timer) return stopPlay();
+  if (atEnd()) step = 0;
+  $("play").textContent = "Pause"; go(1);
+  timer = setInterval(() => { if (atEnd()) stopPlay(); else go(1); }, 1600);
+}
+function switchBy(d) {
+  const i = ALGORITHMS.indexOf(algo), j = (i + d + ALGORITHMS.length) % ALGORITHMS.length;
+  load(ALGORITHMS[j].id);
+}
+
+$("next").onclick = () => { stopPlay(); go(1); };
+$("back").onclick = () => { stopPlay(); go(-1); };
+$("play").onclick = togglePlay;
+$("reset").onclick = () => { stopPlay(); step = 0; render(); };
+$("toend").onclick = () => { stopPlay(); step = path().length; render(); };
+
+// Hide / Show a panel so students can work out that part first. The choice stays when switching examples.
+document.querySelectorAll("[data-veil]").forEach(b => b.addEventListener("click", () => {
+  const on = $(b.dataset.veil).classList.toggle("veiled");
+  b.textContent = on ? "Show" : "Hide";
+  b.setAttribute("aria-pressed", on);
+}));
+
+document.addEventListener("keydown", e => {
+  const t = e.target.tagName;
+  if (t === "INPUT" || t === "SELECT") return;
+  if (t === "BUTTON" && (e.key === " " || e.key === "Enter")) return;
+  if (["ArrowRight", " ", "Enter", "PageDown", "ArrowDown"].includes(e.key)) { e.preventDefault(); stopPlay(); go(1); }
+  else if (["ArrowLeft", "PageUp", "ArrowUp"].includes(e.key)) { e.preventDefault(); stopPlay(); go(-1); }
+  else if (e.key === "r" || e.key === "R") { stopPlay(); step = 0; render(); }
+  else if (e.key === "]") switchBy(1);
+  else if (e.key === "[") switchBy(-1);
+});
+
+load((location.hash || "").slice(1));
+</script>
+
+</body></html>
