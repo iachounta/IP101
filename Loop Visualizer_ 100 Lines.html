@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loop Visualizer: 100 Lines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Caveat:wght@500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1ea; --panel:#ffffff; --ink:#1f2328; --muted:#6b7280; --line:#e5e1d8;
+    --accent:#2f6fde; --accent-soft:#e6eefc; --hit:#fff3c4; --hit-border:#e0b400;
+    --board:#24372e; --board-edge:#7a5532; --chalk:#f2f2ea; --chalk-dim:#c8d3c9;
+    --ok:#1f9d55; --stop:#c2410c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+  header{padding:22px 28px 6px;max-width:1200px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  header p{margin:0;color:var(--muted);font-size:14px}
+  main{max-width:1200px;margin:0 auto;padding:16px 28px 32px;display:grid;grid-template-columns:minmax(340px,1fr) minmax(380px,1.25fr);gap:20px}
+  @media (max-width:860px){main{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .tabs{display:flex;gap:6px;margin-bottom:12px}
+  .tab{border:1px solid var(--line);background:#faf8f3;border-radius:8px;padding:6px 12px;font:600 13px Inter;cursor:pointer;color:var(--ink)}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  pre.code{margin:0;font:14px/1.7 "JetBrains Mono",monospace;background:#fbfaf7;border:1px solid var(--line);border-radius:8px;padding:8px 0;overflow-x:auto}
+  .ln{display:block;padding:0 12px 0 0;border-left:4px solid transparent;white-space:pre;transition:background .12s}
+  .ln .no{display:inline-block;width:34px;text-align:right;color:#aaa;margin-right:14px;user-select:none}
+  .ln.active{background:var(--hit);border-left-color:var(--hit-border)}
+  .kw{color:#a626a4}.fn{color:#2f6fde}.str{color:#2e7d32}.num{color:#b45309}
+  .explain{margin-top:10px;min-height:44px;font-size:14px;background:var(--accent-soft);border-radius:8px;padding:10px 12px;line-height:1.45}
+  .vars{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .var{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fbfaf7}
+  .var .k{font:12px "JetBrains Mono",monospace;color:var(--muted)}
+  .var .v{font:600 22px "JetBrains Mono",monospace;margin-top:2px}
+  .var .v.flash{animation:flash .35s}
+  @keyframes flash{from{color:var(--accent);transform:scale(1.12)}to{color:inherit;transform:none}}
+  .cond{font:600 13px "JetBrains Mono",monospace}
+  .cond.t{color:var(--ok)} .cond.f{color:var(--stop)}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+  button.btn{font:600 13px Inter;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink)}
+  button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.btn:disabled{opacity:.45;cursor:default}
+  .speed{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-left:auto}
+  .grid{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin-top:6px}
+  .cell{aspect-ratio:1;border-radius:3px;background:#ece8df;transition:background .15s}
+  .cell.done{background:var(--accent)}
+  .cell.now{background:var(--hit-border);outline:2px solid #fff;box-shadow:0 0 0 3px var(--hit-border)}
+  .gridlabel{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
+  .boardwrap{background:var(--board-edge);padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+  .board{background:radial-gradient(ellipse at 30% 20%,#2d4539 0%,var(--board) 70%);border-radius:6px;height:470px;overflow-y:auto;padding:14px 18px;font-family:Caveat,cursive;color:var(--chalk);font-size:23px;line-height:1.25;scroll-behavior:smooth}
+  .board::-webkit-scrollbar{width:8px}.board::-webkit-scrollbar-thumb{background:#4b6457;border-radius:4px}
+  .row{display:flex;gap:12px;opacity:0;animation:write .3s forwards}
+  .row .n{color:var(--chalk-dim);font-size:17px;min-width:30px;text-align:right;padding-top:4px;font-family:"JetBrains Mono",monospace}
+  .row.hide-n .n{display:none}
+  @keyframes write{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+  .board .empty{color:var(--chalk-dim);font-size:20px;opacity:.7}
+  .board .end{margin-top:10px;font-family:"JetBrains Mono",monospace;font-size:13px;color:#9fe0b4}
+  .boardfoot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px;color:var(--muted)}
+  label.chk{display:flex;gap:6px;align-items:center;cursor:pointer}
+  .think{margin-top:16px;font-size:14px;line-height:1.5}
+  .think ol{margin:6px 0 0 18px;padding:0}
+  .think li{margin-bottom:4px}
+  code{font-family:"JetBrains Mono",monospace;font-size:.92em;background:#f1eee7;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>One loop, a hundred lines</h1>
+  <p>Step through the code and see what Python does on every pass of the loop. Writing a line 100 times by hand is a punishment; with a loop it's just two lines of code.</p>
+</header>
+
+<main>
+  <section>
+    <div class="card">
+      <h2>Code</h2>
+      <div class="tabs">
+        <button class="tab active" data-mode="for">for loop</button>
+        <button class="tab" data-mode="while">while loop</button>
+      </div>
+      <pre class="code" id="code"></pre>
+      <div class="explain" id="explain">Press <b>Step</b> to run one line at a time, or <b>Play</b> to watch the loop run.</div>
+
+      <div class="vars">
+        <div class="var"><div class="k">i</div><div class="v" id="v-i">–</div></div>
+        <div class="var"><div class="k">lines printed</div><div class="v" id="v-count">0</div></div>
+        <div class="var"><div class="k" id="cond-label">next value?</div><div class="v cond" id="v-cond">–</div></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="b-step">Step ▸</button>
+        <button class="btn primary" id="b-play">▶ Play</button>
+        <button class="btn" id="b-end">Run to end ⏭</button>
+        <button class="btn" id="b-reset">Reset</button>
+        <div class="speed">
+          slow <input type="range" id="speed" min="0" max="100" value="45"> fast
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Iterations: each square is one pass through the loop</h2>
+      <div class="grid" id="grid"></div>
+      <div class="gridlabel"><span>i = 0</span><span>i = 99</span></div>
+      <div class="think">
+        <b>Questions to think about</b>
+        <ol>
+          <li>Why does <code>range(100)</code> stop at 99 and not at 100?</li>
+          <li>What would change if we wrote <code>range(1, 101)</code>?</li>
+          <li>In the while version, what happens if you forget <code>i = i + 1</code>?</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="boardwrap"><div class="board" id="board"><div class="empty">Output appears here…</div></div></div>
+    <div class="boardfoot">
+      <label class="chk"><input type="checkbox" id="shownum" checked> show line numbers</label>
+      <span id="status">Ready</span>
+    </div>
+  </section>
+</main>
+
+<script>
+const MSG = "I will not use ChatGPT for the programming exercises";
+const N = 100;
+const S = `<span class="str">"${MSG}"</span>`;
+const PROGRAMS = {
+  for: [
+    `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">100</span>):`,
+    `    <span class="fn">print</span>(${S})`,
+    `<span class="fn">print</span>(<span class="str">"Done!"</span>)`
+  ],
+  while: [
+    `i = <span class="num">0</span>`,
+    `<span class="kw">while</span> i &lt; <span class="num">100</span>:`,
+    `    <span class="fn">print</span>(${S})`,
+    `    i = i + <span class="num">1</span>`,
+    `<span class="fn">print</span>(<span class="str">"Done!"</span>)`
+  ]
+};
+
+// Build the sequence of execution steps for each program
+function buildSteps(mode){
+  const st = [];
+  if(mode === "for"){
+    for(let i=0;i<N;i++){
+      st.push({line:0, set:i, cond:true,
+        text:i===0 ? `<b>range(100)</b> produces the numbers 0, 1, 2, … 99. The loop takes the first one: <code>i = 0</code>.`
+                   : `The loop takes the next number from range(100): <code>i = ${i}</code>.`});
+      st.push({line:1, print:true,
+        text:`Inside the loop body: print the message. This is line <b>${i+1}</b> of 100.`});
+    }
+    st.push({line:0, cond:false, text:`range(100) has no numbers left after 99, so the loop ends.`});
+    st.push({line:2, done:true, text:`Python continues with the first line <i>after</i> the indented loop body.`});
+  } else {
+    st.push({line:0, set:0, text:`Create the counter variable <code>i</code> and start it at 0.`});
+    for(let i=0;i<N;i++){
+      st.push({line:1, cond:true, text:`Check the condition: is <code>${i} &lt; 100</code>? <b>True</b>, so enter the loop body.`});
+      st.push({line:2, print:true, text:`Print the message. This is line <b>${i+1}</b> of 100.`});
+      st.push({line:3, set:i+1, text:`Increase the counter: <code>i</code> becomes ${i+1}. Then jump back up to the <code>while</code> check.`});
+    }
+    st.push({line:1, cond:false, text:`Check the condition: is <code>100 &lt; 100</code>? <b>False</b>, so the loop stops.`});
+    st.push({line:4, done:true, text:`Python continues with the first line after the loop body.`});
+  }
+  return st;
+}
+
+let mode = "for", steps = [], pc = 0, printed = 0, timer = null, playing = false;
+const $ = id => document.getElementById(id);
+const board = $("board"), grid = $("grid");
+
+for(let k=0;k<N;k++){ const c=document.createElement("div"); c.className="cell"; c.title=`i = ${k}`; grid.appendChild(c); }
+
+function renderCode(active){
+  $("code").innerHTML = PROGRAMS[mode].map((l,k)=>
+    `<span class="ln${k===active?' active':''}"><span class="no">${k+1}</span>${l}</span>`).join("");
+}
+
+function reset(){
+  stop();
+  steps = buildSteps(mode); pc = 0; printed = 0;
+  renderCode(-1);
+  board.innerHTML = '<div class="empty">Output appears here…</div>';
+  $("v-i").textContent = "–"; $("v-count").textContent = "0";
+  $("v-cond").textContent = "–"; $("v-cond").className = "v cond";
+  $("cond-label").textContent = mode === "for" ? "next value in range?" : "i < 100 ?";
+  $("explain").innerHTML = "Press <b>Step</b> to run one line at a time, or <b>Play</b> to watch the loop run.";
+  [...grid.children].forEach(c=>c.className="cell");
+  $("status").textContent = "Ready";
+  setButtons();
+}
+
+function flash(el){ el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+
+function currentI(){ const t=$("v-i").textContent; return t==="–"?null:+t; }
+
+function exec(s, animate=true){
+  if(s.set !== undefined){ $("v-i").textContent = s.set; if(animate) flash($("v-i")); }
+  if(s.cond !== undefined){
+    $("v-cond").textContent = s.cond ? "True" : "False";
+    $("v-cond").className = "v cond " + (s.cond ? "t" : "f");
+  }
+  if(s.print){
+    printed++;
+    if(printed===1) board.innerHTML = "";
+    const r = document.createElement("div");
+    r.className = "row" + ($("shownum").checked ? "" : " hide-n");
+    if(!animate) r.style.animation = "none", r.style.opacity = 1;
+    r.innerHTML = `<span class="n">${printed}</span><span>${MSG}</span>`;
+    board.appendChild(r);
+    $("v-count").textContent = printed; if(animate) flash($("v-count"));
+    const cells = grid.children;
+    if(printed>1) cells[printed-2].className = "cell done";
+    cells[printed-1].className = "cell now";
+  }
+  if(s.done){
+    const cells = grid.children; cells[N-1].className = "cell done";
+    const e = document.createElement("div"); e.className = "end"; e.textContent = "Done!  >>> program finished";
+    board.appendChild(e);
+  }
+}
+
+function step(animate=true){
+  if(pc >= steps.length) return false;
+  const s = steps[pc++];
+  exec(s, animate);
+  if(animate){
+    renderCode(s.line);
+    $("explain").innerHTML = s.text;
+    board.scrollTop = board.scrollHeight;
+  }
+  $("status").textContent = pc >= steps.length ? "Finished: 100 lines printed" : `Step ${pc} of ${steps.length}`;
+  if(pc >= steps.length){ stop(); }
+  setButtons();
+  return true;
+}
+
+function delay(){ const v = +$("speed").value; return Math.round(1400 * Math.pow(0.955, v)) + 8; }
+
+function tick(){ if(!playing) return; if(step()) timer = setTimeout(tick, delay()); }
+
+function play(){ if(pc>=steps.length) reset(); playing = true; $("b-play").textContent = "❚❚ Pause"; tick(); setButtons(); }
+function stop(){ playing = false; clearTimeout(timer); $("b-play").textContent = "▶ Play"; setButtons(); }
+
+function runToEnd(){
+  stop();
+  let last = null;
+  while(pc < steps.length){ last = steps[pc]; step(false); }
+  if(last){ renderCode(last.line); $("explain").innerHTML = last.text; board.scrollTop = board.scrollHeight; }
+}
+
+function setButtons(){
+  const fin = pc >= steps.length;
+  $("b-step").disabled = fin || playing;
+  $("b-end").disabled = fin;
+}
+
+$("b-step").onclick = () => step();
+$("b-play").onclick = () => playing ? stop() : play();
+$("b-end").onclick = runToEnd;
+$("b-reset").onclick = reset;
+$("shownum").onchange = e => board.querySelectorAll(".row").forEach(r=>r.classList.toggle("hide-n", !e.target.checked));
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active"); mode = t.dataset.mode; reset();
+});
+document.addEventListener("keydown", e => {
+  if(e.target.tagName === "INPUT") return;
+  if(e.key === "ArrowRight" && !playing){ e.preventDefault(); step(); }
+  if(e.key === " "){ e.preventDefault(); playing ? stop() : play(); }
+});
+
+reset();
+</script>
+</body>
+</html>
